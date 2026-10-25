@@ -1,0 +1,8 @@
+{
+  "ipc_version": "1", "type": "GameReady", "game_id": "game-min-0001", "sequence": "1",
+  "request_token": "init_min_00000001",
+  "payload": {
+    "mode_id": "bridge_demo", "runtime_api_version": "1.0-draft",
+    "loaded_packages": [{ "id": "org.sgs.example.runtime_bridge", "commit": "3333333333333333333333333333333333333333" }]
+  }
+}

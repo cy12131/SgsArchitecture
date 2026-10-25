@@ -1,0 +1,5 @@
+{
+  "ipc_version": "1", "type": "PlayerReply", "game_id": "game-min-0001", "sequence": "3",
+  "request_token": "choose_b_00000001",
+  "payload": { "player_id": "player-b", "resolution": "reply", "data": { "choice": "right" } }
+}

@@ -1,0 +1,4 @@
+{
+  "ipc_version": "1", "type": "GameFinished", "game_id": "game-min-0001", "sequence": "5",
+  "payload": { "result": { "winner": "player-a", "reason": "example_complete" } }
+}

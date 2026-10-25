@@ -9,4 +9,4 @@
 
 ## Consequences
 
-外部网络兼容性与内部运行时可独立演进；C++ 必须执行身份绑定、字段映射和安全过滤。
+外部网络兼容性与内部运行时可独立演进；C++ 必须执行身份绑定、字段映射和安全过滤。QML GameAction/GameReply 只能经宿主映射为 PlayerAction/PlayerReply，包页面不直接接触任一传输层。

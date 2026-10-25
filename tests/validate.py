@@ -140,6 +140,18 @@ def package_manifest_result_with_url_suffix(suffix_length: int) -> dict:
     }
 
 
+def assert_player_request_semantics(message: dict) -> None:
+    payload = message["payload"]
+    recipients = payload["recipients"]
+    assert payload["required_replies"] <= len(recipients)
+    if payload["reply_mode"] == "all":
+        assert payload["required_replies"] == len(recipients)
+    if payload["reply_mode"] == "first":
+        assert payload["required_replies"] == 1
+    assert set(payload["private_data"]).issubset(recipients)
+    assert set(payload["default_replies"]).issubset(recipients)
+
+
 def main() -> int:
     manifest_v = validator("package-manifest.schema.json")
     sync_v = validator("package-sync.schema.json")
@@ -274,16 +286,22 @@ def main() -> int:
         expect_valid(ipc_v, message, name)
         assert "protocol" not in message and "data" not in message
         assert "ipc_version" in message and "payload" in message
+    assert_player_request_semantics(ipc["player-request.json"])
 
     request = ipc["player-request.json"]
     reply = ipc["player-reply.json"]
     init = ipc["init-game.json"]
     ready = ipc["game-ready.json"]
+    init_player_ids = [player["player_id"] for player in init["payload"]["players"]]
+    init_seats = [player["seat"] for player in init["payload"]["players"]]
+    assert len(init_player_ids) == len(set(init_player_ids))
+    assert len(init_seats) == len(set(init_seats))
     assert init["game_id"] == ready["game_id"]
     assert init["request_token"] == ready["request_token"]
     assert request["game_id"] == reply["game_id"]
     assert request["request_token"] == reply["request_token"]
     assert reply["payload"]["player_id"] in request["payload"]["recipients"]
+    assert set(request["payload"]["recipients"]).issubset(init_player_ids)
 
     safe = ipc["hidden-info-safe.json"]
     unsafe = ipc["hidden-info-unsafe.json"]
@@ -297,9 +315,74 @@ def main() -> int:
     assert exit_scenario["observed"]["pipe_eof"] is True
     assert required_cleanup.issubset(exit_scenario["expected"])
 
+    minimal_root = EXAMPLES / "minimal-runtime-package"
+    minimal_manifest = load("examples/minimal-runtime-package/manifest.json")
+    expect_valid(manifest_v, minimal_manifest, "minimal-runtime-package manifest")
+    assert (minimal_root / minimal_manifest["server"]["entry"]).is_file()
+    assert (minimal_root / minimal_manifest["client"]["qml_entry"]).is_file()
+
+    message_paths = sorted((minimal_root / "messages").glob("*.json"))
+    bridge_messages = [json.loads(path.read_text(encoding="utf-8")) for path in message_paths]
+    for path, message in zip(message_paths, bridge_messages):
+        expect_valid(ipc_v, message, f"minimal-runtime-package/{path.name}")
+
+    parent_types = {"InitGame", "PlayerAction", "PlayerReply", "Shutdown"}
+    parent_sequences = [int(message["sequence"]) for message in bridge_messages if message["type"] in parent_types]
+    child_sequences = [int(message["sequence"]) for message in bridge_messages if message["type"] not in parent_types]
+    assert parent_sequences == list(range(1, len(parent_sequences) + 1))
+    assert child_sequences == list(range(1, len(child_sequences) + 1))
+
+    by_type = {message["type"]: message for message in bridge_messages if message["type"] not in {"GameOutput"}}
+    bridge_request = by_type["PlayerRequest"]
+    bridge_reply = by_type["PlayerReply"]
+    assert_player_request_semantics(bridge_request)
+    assert by_type["InitGame"]["request_token"] == by_type["GameReady"]["request_token"]
+    bridge_player_ids = [player["player_id"] for player in by_type["InitGame"]["payload"]["players"]]
+    assert len(bridge_player_ids) == len(set(bridge_player_ids))
+    assert by_type["PlayerAction"]["payload"]["player_id"] in bridge_player_ids
+    assert by_type["InitGame"]["payload"]["packages"] == by_type["GameReady"]["payload"]["loaded_packages"]
+    assert bridge_request["request_token"] == bridge_reply["request_token"]
+    assert bridge_reply["payload"]["player_id"] in bridge_request["payload"]["recipients"]
+    assert bridge_reply["payload"]["resolution"] == "reply"
+
+    bridge_outputs = [message for message in bridge_messages if message["type"] == "GameOutput"]
+    assert {tuple(message["payload"]["recipients"]) for message in bridge_outputs} == {
+        ("player-a",), ("player-b",),
+    }
+    for message in bridge_outputs:
+        owner = message["payload"]["data"]["state"]["owner"]
+        assert message["payload"]["recipients"] == [owner]
+
+    edge_cases = load("examples/minimal-runtime-package/edge-cases.json")
+    edge_by_name = {case["name"]: case for case in edge_cases["cases"]}
+    for case in edge_cases["cases"]:
+        if "message" in case:
+            expect_valid(ipc_v, case["message"], f"edge-case/{case['name']}")
+            assert case["message"]["request_token"] == edge_cases["request_token"]
+    assert edge_by_name["timeout"]["message"]["payload"]["resolution"] == "timeout"
+    assert edge_by_name["timeout"]["message"]["payload"]["data"] == bridge_request["payload"]["default_replies"]["player-b"]
+    assert edge_by_name["duplicate_reply"]["expected"] == "reject_duplicate_without_resume"
+    assert edge_by_name["non_target_player"]["message"]["payload"]["player_id"] not in bridge_request["payload"]["recipients"]
+    assert edge_by_name["player_disconnect"]["message"]["payload"]["resolution"] == "disconnect"
+    assert edge_by_name["lua_process_exit"]["observed"]["pipe_eof"] is True
+
+    lua_contract = (ROOT / "contracts/lua-runtime-api-v1.md").read_text(encoding="utf-8")
+    qml_contract = (ROOT / "contracts/qml-extension-api-v1.md").read_text(encoding="utf-8")
+    ipc_contract = (ROOT / "contracts/game-ipc-v1.md").read_text(encoding="utf-8")
+    for message_type in (
+        "InitGame", "GameReady", "PlayerAction", "PlayerRequest", "PlayerReply",
+        "GameOutput", "GameFinished", "GameFailed", "Shutdown",
+    ):
+        assert message_type in ipc_contract
+    for draft_contract in (lua_contract, qml_contract):
+        assert "Draft" in draft_contract and "Implementation Candidate" in draft_contract
+
+    fixture_count = len(list(EXAMPLES.rglob("*.json")))
+
     print("PASS: 3 schemas are valid Draft 2020-12 schemas")
-    print("PASS: 26 fixture files cover package forms, SGS/1 compatibility, RFC 8785, dependencies, IPC, exit, and secrecy")
+    print(f"PASS: {fixture_count} JSON fixtures cover package forms, SGS/1 compatibility, RFC 8785, dependencies, IPC, exit, and secrecy")
     print("PASS: generated PackageManifestResult boundary cases are 65536 bytes accepted and 65537 bytes rejected for sending")
+    print("PASS: minimal bridge validates per-direction sequences, token/target authority, timeout/default, and private views")
     print("PASS: expected-invalid cases were rejected by their designated validation layer")
     return 0
 

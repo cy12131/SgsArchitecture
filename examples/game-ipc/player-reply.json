@@ -4,5 +4,5 @@
   "game_id": "game-0001",
   "sequence": "2",
   "request_token": "request_A1b2C3d4E5",
-  "payload": { "player_id": "player-a", "data": { "card_id": "card-7" }, "cancelled": false }
+  "payload": { "player_id": "player-a", "resolution": "reply", "data": { "card_id": "card-7" } }
 }

@@ -1,0 +1,14 @@
+{
+  "ipc_version": "1", "type": "InitGame", "game_id": "game-min-0001", "sequence": "1",
+  "request_token": "init_min_00000001",
+  "payload": {
+    "manifest_id": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "mode_id": "bridge_demo", "seed": "20261025",
+    "players": [
+      { "player_id": "player-a", "seat": 1, "display_name": "A" },
+      { "player_id": "player-b", "seat": 2, "display_name": "B" }
+    ],
+    "packages": [{ "id": "org.sgs.example.runtime_bridge", "commit": "3333333333333333333333333333333333333333" }],
+    "settings": { "max_rounds": 1 }
+  }
+}

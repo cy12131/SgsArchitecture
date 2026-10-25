@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0-draft - 2026-10-25
+
+- 细化独立 Lua 进程启动、Game/GameEvent/TriggerEvent、Content 注册和清理语义。
+- 定义多玩家 Request Bridge 状态机、超时/default/断线/重复回复及协程一次恢复规则。
+- 细化 QML 动态加载、GameViewContext、snapshot/delta、并发请求、资源和销毁生命周期。
+- 扩展 GameIPC InitGame、GameReady、PlayerRequest 和 PlayerReply 字段，并确认九种消息覆盖 Draft API。
+- 新增最小双人桥接包、失败场景、三 Agent 接口矩阵和动态集成清单。
+
 ## 0.1.2-draft - 2026-10-25
 
 - 明确旧客户端仍可 Hello/Ping/Echo，但在 PackageReady 前以 `PACKAGE_PROTOCOL_REQUIRED` 阻止 EnterLobby 且不断开连接。

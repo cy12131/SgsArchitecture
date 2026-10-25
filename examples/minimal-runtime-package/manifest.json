@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "org.sgs.example.runtime_bridge",
+  "name": "Runtime Bridge Contract Example",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "dependencies": [],
+  "server": { "entry": "server/init.lua" },
+  "client": { "qml_entry": "client/MinimalGame.qml" },
+  "resources": ["README.md"]
+}

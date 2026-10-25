@@ -2,12 +2,12 @@
 
 SGS 跨仓库架构规范、协议契约、机器可验证 Schema、示例和架构决策记录。
 
-当前规范版本：`0.1.2-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
+当前规范版本：`0.2.0-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
 
 ## 稳定性
 
 - `Package Manifest v1`、`Package Sync v1`、`GameIPC/1`：M3 实现基线；破坏性修改必须记录 ADR 和 CHANGELOG。
-- `Lua Runtime API v1`、`QML Extension API v1`：**Draft**，分别等待最小规则包验证和真实动态加载测试，尚未冻结。
+- `Lua Runtime API v1`、`QML Extension API v1`：**Draft / Implementation Candidate**，已细化生命周期、Request Bridge 和宿主接口，但仍等待真实 Linux/Qt 集成测试，尚未冻结。
 - M1/M2 的 SGS/1 四字节大端长度帧、UTF-8 JSON 和 `{protocol,type,request_id,data}` 信封保持不变；GameIPC/1 独立使用自己的 `ipc_version` 和 `payload`。
 
 ## 目录
@@ -17,6 +17,7 @@ SGS 跨仓库架构规范、协议契约、机器可验证 Schema、示例和架
 - `examples/`：正例、反例和安全测试向量。
 - `tests/`：Schema 与跨文件语义校验。
 - `decisions/`：ADR。
+- `contracts/m3-agent-interface-matrix.md`：三实现 Agent 与架构维护边界。
 
 ## 验证
 
@@ -26,6 +27,8 @@ python tests/validate.py
 ```
 
 验证器检查 Schema 正反例、RFC 8785 官方向量，并补充 JSON Schema 无法表达的重复 ID、缺失依赖、循环依赖、`manifest_id` 和请求往返规则。
+
+`examples/minimal-runtime-package` 是静态契约样例，不代表真实 Lua 子进程或 Qt/QML 端到端联调；动态门槛见 `tests/integration-checklist.md`。
 
 ## 范围边界
 

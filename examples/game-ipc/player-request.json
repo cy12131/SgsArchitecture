@@ -8,7 +8,12 @@
     "recipients": ["player-a"],
     "request_type": "choose_card",
     "deadline_ms": 15000,
+    "reply_mode": "all",
+    "required_replies": 1,
+    "cancel_policy": "use_default",
+    "disconnect_policy": "use_default",
     "public_data": { "count": 1 },
-    "private_data": { "player-a": { "card_ids": ["card-7", "card-9"] } }
+    "private_data": { "player-a": { "card_ids": ["card-7", "card-9"] } },
+    "default_replies": { "player-a": { "card_id": "card-7" } }
   }
 }

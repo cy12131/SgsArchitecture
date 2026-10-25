@@ -1,0 +1,7 @@
+{
+  "ipc_version": "1", "type": "GameOutput", "game_id": "game-min-0001", "sequence": "4",
+  "payload": {
+    "recipients": ["player-b"], "output_type": "view_snapshot",
+    "data": { "revision": "1", "state": { "owner": "player-b", "score": 0, "own_choice": "right" } }
+  }
+}

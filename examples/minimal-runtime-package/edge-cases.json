@@ -1,0 +1,31 @@
+{
+  "request_token": "choose_b_00000001",
+  "target_player": "player-b",
+  "cases": [
+    {
+      "name": "timeout",
+      "message": { "ipc_version": "1", "type": "PlayerReply", "game_id": "game-min-0001", "sequence": "4", "request_token": "choose_b_00000001", "payload": { "player_id": "player-b", "resolution": "timeout", "data": { "choice": "left" } } },
+      "expected": "resolve_default_once"
+    },
+    {
+      "name": "duplicate_reply",
+      "message": { "ipc_version": "1", "type": "PlayerReply", "game_id": "game-min-0001", "sequence": "5", "request_token": "choose_b_00000001", "payload": { "player_id": "player-b", "resolution": "reply", "data": { "choice": "left" } } },
+      "expected": "reject_duplicate_without_resume"
+    },
+    {
+      "name": "non_target_player",
+      "message": { "ipc_version": "1", "type": "PlayerReply", "game_id": "game-min-0001", "sequence": "6", "request_token": "choose_b_00000001", "payload": { "player_id": "player-c", "resolution": "reply", "data": { "choice": "left" } } },
+      "expected": "reject_not_target"
+    },
+    {
+      "name": "player_disconnect",
+      "message": { "ipc_version": "1", "type": "PlayerReply", "game_id": "game-min-0001", "sequence": "7", "request_token": "choose_b_00000001", "payload": { "player_id": "player-b", "resolution": "disconnect", "data": { "choice": "left" } } },
+      "expected": "resolve_disconnect_policy_once"
+    },
+    {
+      "name": "lua_process_exit",
+      "observed": { "pipe_eof": true, "exit_code": 23 },
+      "expected": "fail_game_cancel_requests_async_reap"
+    }
+  ]
+}

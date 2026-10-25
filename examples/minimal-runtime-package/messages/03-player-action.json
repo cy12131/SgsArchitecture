@@ -1,0 +1,4 @@
+{
+  "ipc_version": "1", "type": "PlayerAction", "game_id": "game-min-0001", "sequence": "2",
+  "payload": { "player_id": "player-a", "action_type": "simple_action", "data": { "value": 1 } }
+}

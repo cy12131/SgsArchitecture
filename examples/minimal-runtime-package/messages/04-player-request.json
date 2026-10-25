@@ -1,0 +1,12 @@
+{
+  "ipc_version": "1", "type": "PlayerRequest", "game_id": "game-min-0001", "sequence": "2",
+  "request_token": "choose_b_00000001",
+  "payload": {
+    "recipients": ["player-b"], "request_type": "choose_one", "deadline_ms": 10000,
+    "reply_mode": "all", "required_replies": 1,
+    "cancel_policy": "use_default", "disconnect_policy": "use_default",
+    "public_data": { "prompt": "Choose one" },
+    "private_data": { "player-b": { "choices": ["left", "right"] } },
+    "default_replies": { "player-b": { "choice": "left" } }
+  }
+}

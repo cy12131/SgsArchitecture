@@ -27,3 +27,5 @@
 | `game-ipc/hidden-info-unsafe.json` | 合法 | 安全策略非法 | 测试因隐藏字段广播给多人而拒绝 |
 
 “Schema 合法但语义非法”是刻意的测试向量；跨消息状态和信息流策略由自动化语义校验覆盖。
+
+`minimal-runtime-package/` 提供双人 Init→Action→Event/Request→Reply→定向视图→Finished 静态流程，以及超时、重复回复、非目标回复、断线和 Lua 进程退出向量。其 Lua/QML 文件是契约伪实现，不是动态联调结果。
