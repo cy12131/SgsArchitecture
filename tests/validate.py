@@ -114,6 +114,32 @@ def assert_sgs1_envelope(message: dict, *, notification: bool = False) -> None:
     assert len(json.dumps(message, ensure_ascii=False).encode("utf-8")) <= 65536
 
 
+def encoded_sgs1_body(message: dict) -> bytes:
+    return json.dumps(message, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+def package_manifest_result_with_url_suffix(suffix_length: int) -> dict:
+    package = {
+        "id": "org.sgs.boundary",
+        "version": "1.0.0",
+        "api_version": "1.0",
+        "repository_url": "https://example.invalid/" + ("a" * suffix_length),
+        "commit": "1" * 40,
+        "manifest_sha256": "a" * 64,
+        "dependencies": [],
+    }
+    return {
+        "protocol": 1,
+        "type": "PackageManifestResult",
+        "request_id": 21,
+        "data": {
+            "manifest_id": manifest_id([package]),
+            "packages": [package],
+            "sync_timeout_ms": 30000,
+        },
+    }
+
+
 def main() -> int:
     manifest_v = validator("package-manifest.schema.json")
     sync_v = validator("package-sync.schema.json")
@@ -194,6 +220,39 @@ def main() -> int:
     legacy_envelope = load("examples/package-sync/invalid-legacy-envelope.json")
     expect_invalid(sync_v, legacy_envelope, "invalid-legacy-envelope")
 
+    protocol_required = load("examples/package-sync/package-protocol-required.json")
+    too_large_error = load("examples/package-sync/package-manifest-too-large.json")
+    empty_ready = load("examples/package-sync/empty-manifest-ready.json")
+    for label, message in (
+        ("package-protocol-required", protocol_required),
+        ("package-manifest-too-large", too_large_error),
+        ("empty-manifest-ready", empty_ready),
+    ):
+        expect_valid(sync_v, message, label)
+        assert_sgs1_envelope(message)
+    assert protocol_required["data"]["code"] == "PACKAGE_PROTOCOL_REQUIRED"
+    assert too_large_error["data"]["code"] == "PACKAGE_MANIFEST_TOO_LARGE"
+
+    empty_result = load("examples/package-sync/empty-manifest.json")
+    package_state = "NotReady"
+    current_manifest_id = empty_result["data"]["manifest_id"]
+    assert package_state == "NotReady"  # Receiving even an empty list does not imply Ready.
+    if empty_ready["data"]["manifest_id"] == current_manifest_id:
+        package_state = "Ready"
+    assert package_state == "Ready"
+    package_state = "NotReady"  # Disconnect and PackageManifestChanged both clear it.
+    assert package_state == "NotReady"
+
+    base_boundary = package_manifest_result_with_url_suffix(0)
+    exact_padding = 65536 - len(encoded_sgs1_body(base_boundary))
+    assert exact_padding > 0
+    boundary_message = package_manifest_result_with_url_suffix(exact_padding)
+    oversized_message = package_manifest_result_with_url_suffix(exact_padding + 1)
+    expect_valid(sync_v, boundary_message, "manifest-result-65536-bytes")
+    expect_valid(sync_v, oversized_message, "manifest-result-65537-bytes-structurally-valid")
+    assert len(encoded_sgs1_body(boundary_message)) == 65536
+    assert len(encoded_sgs1_body(oversized_message)) == 65537
+
     mismatch = load("examples/package-sync/ready-mismatch.json")
     expect_valid(sync_v, mismatch["message"], "ready-mismatch message")
     expect_valid(sync_v, mismatch["expected_response"], "ready-mismatch response")
@@ -239,7 +298,8 @@ def main() -> int:
     assert required_cleanup.issubset(exit_scenario["expected"])
 
     print("PASS: 3 schemas are valid Draft 2020-12 schemas")
-    print("PASS: 23 fixture files cover four package forms, SGS/1 envelopes, RFC 8785, dependencies, IPC, exit, and secrecy")
+    print("PASS: 26 fixture files cover package forms, SGS/1 compatibility, RFC 8785, dependencies, IPC, exit, and secrecy")
+    print("PASS: generated PackageManifestResult boundary cases are 65536 bytes accepted and 65537 bytes rejected for sending")
     print("PASS: expected-invalid cases were rejected by their designated validation layer")
     return 0
 

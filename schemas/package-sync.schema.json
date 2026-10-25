@@ -7,7 +7,8 @@
     { "$ref": "#/$defs/packageManifestResult" },
     { "$ref": "#/$defs/packageReady" },
     { "$ref": "#/$defs/packageReadyResult" },
-    { "$ref": "#/$defs/packageManifestChanged" }
+    { "$ref": "#/$defs/packageManifestChanged" },
+    { "$ref": "#/$defs/packageSyncError" }
   ],
   "$defs": {
     "requestId": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
@@ -97,6 +98,22 @@
         "protocol": { "const": 1 }, "type": { "const": "PackageManifestChanged" },
         "request_id": { "const": 0 },
         "data": { "type": "object", "additionalProperties": false, "required": ["manifest_id"], "properties": { "manifest_id": { "$ref": "#/$defs/hash" } } }
+      }
+    },
+    "packageSyncError": {
+      "type": "object", "additionalProperties": false,
+      "required": ["protocol", "type", "request_id", "data"],
+      "properties": {
+        "protocol": { "const": 1 }, "type": { "const": "Error" },
+        "request_id": { "$ref": "#/$defs/requestId" },
+        "data": {
+          "type": "object", "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "enum": ["PACKAGE_PROTOCOL_REQUIRED", "PACKAGE_MANIFEST_TOO_LARGE"] },
+            "message": { "type": "string", "minLength": 1, "maxLength": 512 }
+          }
+        }
       }
     }
   }

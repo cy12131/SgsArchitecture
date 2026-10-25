@@ -15,6 +15,9 @@
 | `package-sync/get-package-manifest.json` | 合法 | 合法 | 接受 SGS/1 最大合法请求 ID |
 | `package-sync/manifest-changed.json` | 合法 | 合法 | 通知使用 `request_id: 0` |
 | `package-sync/invalid-legacy-envelope.json` | 非法 | 未运行 | 拒绝字符串 ID、缺少 protocol 和 payload 信封 |
+| `package-sync/package-protocol-required.json` | 合法 | 合法 | 未 Ready 的 EnterLobby 返回标准 Error 且不断线 |
+| `package-sync/package-manifest-too-large.json` | 合法 | 合法 | 超限清单启用失败并保留上一有效清单 |
+| `package-sync/empty-manifest-ready.json` | 合法 | 合法 | 空清单仍需显式 PackageReady |
 | `rfc8785/section-3.2.2-vector.json` | 标准向量 | 合法 | 规范 UTF-8 字节及 SHA-256 必须精确匹配 |
 | `rfc8785/section-3.2.3-sorting-vector.json` | 标准向量 | 合法 | 属性按 RFC 8785 UTF-16 规则排序 |
 | `game-ipc/init-game.json`, `game-ready.json` | 合法 | 合法 | token 匹配，完成正常初始化 |

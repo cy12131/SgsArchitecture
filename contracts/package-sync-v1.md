@@ -27,7 +27,22 @@
 - `PackageReadyResult`：响应，`data.ready=true`；失败时 `ready=false` 并带结构化 `error`。
 - `PackageManifestChanged`：服务端通知，`request_id=0`；只携带新 `manifest_id`，客户端随后发送新请求获取详情。
 
-PackageReady 内嵌错误结构为 `{code, message, retryable, details?}`。不支持包协商的客户端触发必须依赖包的操作时，服务端使用 SGS/1 `Error` 信封，回显该操作的合法 request ID，`data.code` 为 `PACKAGE_PROTOCOL_REQUIRED`，并在 `data.message` 中说明需要 `PackageSync/1`；不得伪装成空清单。是否关闭连接由将来的能力协商设计决定，M3 不擅自改变 SGS/1 Error 的公共字段。
+PackageReady 内嵌错误结构为 `{code, message, retryable, details?}`。SGS/1 公共错误继续使用标准 `Error` 信封和 `{code,message}` data，不混用内嵌错误结构。
+
+## 连接兼容性与大厅门禁
+
+每条新连接的包状态从 `NotReady` 开始，并与临时用户身份一样只属于该 TCP Session：
+
+1. 原有 `Hello`、`Ping`、`Echo` 行为不变；未同步客户端仍可完成握手、Ping 和 Echo。
+2. 新客户端在 `EnterLobby` 前必须完成 `GetPackageManifest → PackageManifestResult → PackageReady → PackageReadyResult`。
+3. 服务端只在收到与当前有效清单相同的 `PackageReady.data.manifest_id` 后把连接标记为 `Ready`。摘要不匹配返回 `MANIFEST_ID_MISMATCH`，状态保持 `NotReady`。
+4. 空清单也必须完成同一往返；不能因为 `packages` 为空而隐式 Ready。
+5. `NotReady` 客户端发送 `EnterLobby` 时，服务端返回标准 SGS/1 `Error`，回显该请求 ID，`data.code` 为 `PACKAGE_PROTOCOL_REQUIRED`。写完错误后默认保持 TCP 连接，允许客户端继续协商。
+6. 未 Ready 的连接不得进入大厅、创建房间或加入房间。CreateRoom/JoinRoom 仍需原有大厅状态，并额外要求当前清单 Ready。
+7. 断线立即清除该 Session 的 Ready 状态；重连从 NotReady 开始，不复用旧连接确认。
+8. `PackageManifestChanged` 将连接状态重新置为 NotReady；客户端必须针对新摘要重新完成同步确认。
+
+该门禁使不知道 Package Sync 的旧客户端仍可使用原有握手和诊断消息，但无法进入 M3 大厅，不需要修改 Hello 信封或主动关闭连接。
 
 ## manifest_id
 
@@ -46,6 +61,18 @@ PackageReady 内嵌错误结构为 `{code, message, retryable, details?}`。不�
 跨端实现必须采用通过 RFC 8785 官方序列化向量的实现：Linux C++ 可使用通过相同向量验证的 JCS 库，Windows Qt 不得依赖 `QJsonDocument` 的默认输出格式。仓库测试使用专用 `rfc8785` 实现，并把 RFC 8785 第 3.2.2 节输入同时与公开预期规范字节及预期 SHA-256 比较。
 
 每项 `commit` 必须是完整的 40 位 SHA-1 或 64 位 SHA-256 小写对象 ID，不接受分支、标签或缩写。`manifest_sha256` 是该 commit 中 `manifest.json` 原始字节的 SHA-256。Git URL 与 commit 来自服务器安装注册表。
+
+## SGS/1 单帧大小
+
+`PackageManifestResult` 必须放入一个 SGS/1 帧，Package Sync v1 不分页、不分片：
+
+1. 服务端先完成清单 Schema/依赖验证和 `manifest_id` 计算。
+2. 随后使用实际发送所采用的 JSON 序列化器，编码完整 `{protocol,type,request_id,data}` 消息。
+3. 只计算 UTF-8 JSON 正文字节，不含四字节长度头；结果必须在 `1..65536` 字节。
+4. 若超过 65536 字节，禁止发送、截断或拆帧，启用事务以 `PACKAGE_MANIFEST_TOO_LARGE` 失败并保留上一份有效清单及其摘要。
+5. 若请求处理阶段仍检测到该内部配置错误，服务端返回能够放入单帧的标准 SGS/1 `Error`，code 为 `PACKAGE_MANIFEST_TOO_LARGE`；连接保持可用。
+
+大小取决于完整 JSON 的实际 UTF-8 编码，包括信封、仓库 URL、包 ID、依赖和转义字符，不得仅以包数量估算。管理员工具应在提交启用事务前执行同一编码检查。本版本不引入分页协议。
 
 ## 客户端事务
 
@@ -70,4 +97,3 @@ PackageReady 内嵌错误结构为 `{code, message, retryable, details?}`。不�
 
 - 私有仓库凭据分发机制尚未确定；建议 M3 首先只支持管理员预配置的公开仓库或系统凭据助手。
 - Git SHA-256 仓库的端到端工具链支持需实测；Schema 已预留 64 位对象 ID。
-- 客户端能力协商和 `PACKAGE_PROTOCOL_REQUIRED` 后是否关闭连接尚未纳入 M2；建议 M3 实现前单独形成兼容性决策。

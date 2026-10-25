@@ -1,0 +1,9 @@
+{
+  "protocol": 1,
+  "type": "Error",
+  "request_id": 10,
+  "data": {
+    "code": "PACKAGE_PROTOCOL_REQUIRED",
+    "message": "Complete PackageSync/1 before EnterLobby"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "protocol": 1,
+  "type": "Error",
+  "request_id": 21,
+  "data": {
+    "code": "PACKAGE_MANIFEST_TOO_LARGE",
+    "message": "The active package manifest exceeds the SGS/1 65536-byte body limit"
+  }
+}
