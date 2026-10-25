@@ -130,6 +130,18 @@ Lua rule coroutine   Lua Runtime       C++ parent/Asio       Client/QML
 
 依赖包先注册；同一 registry 的 `(owner_package,id)` 必须唯一。对局进入 Ready 后 registry 冻结。卡牌、武将、技能 ID 的最终命名规则本 Draft 不冻结，由后续 Package Agent 评审决定。
 
+### 跨包武将与皮肤能力（Draft）
+
+未来 Content 层必须提供以下概念能力；名称用于架构讨论，不是已冻结的 Lua 方法名或参数格式：
+
+- **GeneralRegistry**：注册武将并按稳定跨包武将 ID 查询。ID 必须在同一启动 generation 内无歧义，且不能依赖本地路径或加载顺序偶然生成；其具体命名语法尚未冻结。
+- **SkinRegistry**：允许当前皮肤包以目标武将 ID 注册额外皮肤描述，包括立绘、技能语音、阵亡语音和动画的逻辑引用。注册不得修改目标武将 definition，也不得取得目标包的写权限。
+- **ResourceResolver**：把带来源包身份的逻辑资源引用交给客户端受控解析；Lua 不拼接客户端文件路径，也不读取 QML 资源文件。
+
+皮肤包必须通过 Manifest 依赖目标武将包，按拓扑顺序在目标武将注册后执行。目标武将不存在、依赖未声明或不满足时拒绝皮肤注册。SkinRegistry 必须检测同一目标武将下的皮肤 ID 冲突；M3-C 默认拒绝冲突，不采用加载较晚者覆盖。冲突键的序列化格式、皮肤 ID 语法和 Registry definition 形状仍为 Draft。
+
+皮肤选择不得改变武将规则、技能实现或权威状态。皮肤项不可用时，运行时只保留/恢复目标武将的默认资源语义；具体选择状态归属和跨局持久化协议尚未确定。皮肤包停用只修改下次启动配置，正常重启后新 generation 不再注册其皮肤，武将包无需修改。
+
 ## 最小接口草案
 
 ```lua
@@ -151,3 +163,4 @@ return pkg
 - freekill-core 的哪些事件阶段和 utility helper 应成为稳定最小面，哪些保留在兼容包内？
 - skill/trigger 热卸载已由 ADR-0009 排除；本 Draft 只保留静态注册与清理 API，不得据此实现运行时包卸载。
 - 确定性重放需要记录随机调用还是输入流；建议先记录 seed + 全部已验证输入并做交叉验证。
+- 稳定武将 ID 与皮肤 ID 的具体命名语法、皮肤 definition 字段和选择状态归属尚未冻结。

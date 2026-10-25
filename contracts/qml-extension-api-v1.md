@@ -98,7 +98,11 @@ Closing → disconnect signals/timers → clear models → destroy page/context
 - QML 组件由包内 `qmldir` 或显式相对 import 定位；模块 URI 必须在包命名空间内。依赖包只能按声明依赖访问。
 - 缺资源返回无效 URL 和 `RESOURCE_NOT_FOUND`，不得静默回退到其他包同名文件。
 - 活跃对局固定 package generation；资源包更新不热替换现有页面。同一服务器进程中的新对局也继续使用启动 generation；服务器正常重启、客户端重连并完成 Package Sync 后才可能使用新 generation。
-- 武将皮肤、语音和动态立绘的最终命名/绑定规则本 Draft 不冻结。
+- 独立皮肤包可为声明依赖中的武将包注册额外立绘、技能语音、阵亡语音和动画，不得修改或覆盖目标包文件。绑定使用由 GeneralRegistry 暴露的稳定跨包武将 ID。
+- 客户端侧 **SkinRegistry** 与 **ResourceResolver** 是未来概念能力，不是已冻结的 QML/C++ 类型或方法。注册项必须携带 owner package，解析只能访问 owner 自身或其声明依赖允许的资源；所有文件仍来自当前锁定 generation 中各自 Git commit。
+- 依赖拓扑保证武将元数据先于皮肤扩展可用。目标武将不存在、依赖未声明或同一目标武将下皮肤 ID 冲突时，拒绝该皮肤注册并给出结构化诊断；不得以目录扫描、加载较晚覆盖或跨包同名文件替代显式绑定。
+- 选中皮肤的任一立绘、技能语音、阵亡语音或动画缺失、损坏或格式不受支持时，客户端安全回退到武将包声明的默认资源；默认项也不可用时显示框架占位资源并记录净化诊断，不得访问未声明包或任意本地路径。
+- 武将 ID 语法、皮肤 ID 语法、皮肤文件命名、技能语音映射格式和动态皮肤格式均保持 Draft，不在本版本冻结。
 
 ## 错误处理
 
@@ -109,3 +113,4 @@ Closing → disconnect signals/timers → clear models → destroy page/context
 - 首版是否使用独立 QQmlEngine 隔离每个包，需用真实资源和插件导入测试后决定。
 - 允许的 QML import 白名单、网络访问和本地存储能力尚需客户端安全评审。
 - GameViewContext 的具体 Qt 类型（singleton、context property 或注入对象）未冻结；建议优先可测试的显式注入对象。
+- SkinRegistry/ResourceResolver 的最终 C++/QML 类型、注册数据结构、皮肤选择持久化及动态动画能力白名单尚未确定。

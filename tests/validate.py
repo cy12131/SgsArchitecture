@@ -384,6 +384,8 @@ def main() -> int:
     manifest_contract = (ROOT / "contracts/package-manifest-v1.md").read_text(encoding="utf-8")
     sync_contract = (ROOT / "contracts/package-sync-v1.md").read_text(encoding="utf-8")
     activation_adr = (ROOT / "decisions/0009-restart-required-package-activation.md").read_text(encoding="utf-8")
+    skin_adr = (ROOT / "decisions/0010-cross-package-skin-binding.md").read_text(encoding="utf-8")
+    integration_checklist = (ROOT / "tests/integration-checklist.md").read_text(encoding="utf-8")
     for message_type in (
         "InitGame", "GameReady", "PlayerAction", "PlayerRequest", "PlayerReply",
         "GameOutput", "GameFinished", "GameFailed", "Shutdown",
@@ -397,6 +399,16 @@ def main() -> int:
     assert "管理员包操作不会触发" in sync_contract
     assert "启动时锁定" in ipc_contract
     assert "随后创建的新对局仍使用服务器启动时锁定的 generation" in lua_contract
+    for skin_contract in (lua_contract, qml_contract, skin_adr):
+        for capability in ("GeneralRegistry", "SkinRegistry", "ResourceResolver"):
+            assert capability in skin_contract
+        assert "Draft" in skin_contract
+    assert "不冻结武将 ID" in skin_adr
+    assert "独立 Git 仓库" in skin_adr and "Manifest" in skin_adr
+    assert "restart-required" in manifest_contract
+    assert "M3-C 跨资源包皮肤扩展验收" in integration_checklist
+    for acceptance_term in ("武将包内容和 commit 保持不变", "安全回退", "正常重启", "锁定 Git commit"):
+        assert acceptance_term in integration_checklist
 
     fixture_count = len(list(EXAMPLES.rglob("*.json")))
 
@@ -405,6 +417,7 @@ def main() -> int:
     print("PASS: generated PackageManifestResult boundary cases are 65536 bytes accepted and 65537 bytes rejected for sending")
     print("PASS: minimal bridge validates per-direction sequences, token/target authority, timeout/default, and private views")
     print("PASS: package administration remains disk-only until restart; boot generation stays immutable for sync and Lua games")
+    print("PASS: cross-package skin requirements retain dependency, conflict, fallback, independent commit, restart, and Draft boundaries")
     print("PASS: expected-invalid cases were rejected by their designated validation layer")
     return 0
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2-draft - 2026-10-25
+
+- 确立独立皮肤包可通过稳定跨包武将 ID 扩展其他包中既有武将的长期架构要求。
+- 在 Lua/QML 草案中规划 GeneralRegistry、SkinRegistry 和 ResourceResolver 能力及冲突、依赖、加载和安全回退语义。
+- 明确不冻结武将 ID 语法、皮肤文件命名、动态皮肤格式或具体方法签名。
+- 增加 M3-C 独立皮肤包动态验收项和静态文档一致性检查。
+
 ## 0.2.1-draft - 2026-10-25
 
 - 采用 restart-required package activation；管理操作只写磁盘期望配置，不改变当前服务器进程的有效清单。

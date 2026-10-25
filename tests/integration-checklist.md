@@ -1,4 +1,4 @@
-# M3-P4 Dynamic Integration Checklist
+# M3 Dynamic Integration Checklist
 
 这些项目无法由静态 JSON/Schema 测试证明，完成前 Lua Runtime API 和 QML Extension API 保持 Draft。
 
@@ -25,3 +25,16 @@
 
 - 运行 examples/minimal-runtime-package 对应真实双人流程，包括正常回复、超时、断线、异常退出和不同玩家视图。
 - 记录 Linux/Windows 版本、锁定 commit、manifest_id、消息 trace 和测试结果；静态样例不得替代该报告。
+
+## M3-C 跨资源包皮肤扩展验收
+
+以下项目必须使用相互独立、分别锁定 Git commit 的武将包仓库和皮肤包仓库完成；不得为样例增加 SgsServer/SgsClient 专用分支代码：
+
+1. 武将包通过 GeneralRegistry 候选接口正常注册武将及默认资源。
+2. 声明 Manifest 依赖的独立皮肤包通过 SkinRegistry 候选接口，为已有稳定武将 ID 添加额外皮肤、技能语音、阵亡语音和动画。
+3. 完成绑定时武将包内容和 commit 保持不变；只更新皮肤包即可增加扩展资源。
+4. 注入缺失/损坏的立绘、语音和动画，ResourceResolver 安全回退到武将默认资源；不得越权解析其他未声明包或本地路径。
+5. 管理员停用皮肤包时当前 generation 不变；SgsServer 正常重启并由客户端重新同步后，SkinRegistry 不再含该包注册项，武将恢复默认资源。
+6. 运行 trace 同时记录武将包与皮肤包各自的仓库 URL、锁定 commit、manifest_id、依赖拓扑及实际资源 owner。
+
+另需覆盖目标武将不存在、未声明依赖、重复皮肤 ID 和循环依赖；均应确定性拒绝且不得以加载顺序覆盖。
