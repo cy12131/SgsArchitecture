@@ -1,0 +1,13 @@
+{
+  "ipc_version": "1",
+  "type": "InitGame",
+  "game_id": "game-0001",
+  "sequence": "1",
+  "request_token": "init_A1b2C3d4E5f6",
+  "payload": {
+    "mode_id": "standard",
+    "seed": "424242",
+    "players": ["player-a", "player-b"],
+    "packages": [{ "id": "org.sgs.base", "commit": "1111111111111111111111111111111111111111" }]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "type": "PackageManifestResult",
+  "request_id": "2",
+  "payload": {
+    "manifest_id": "1b773ff47e081a15bc050331b8beabe6e1e6ee001301ccc11c7249bfe70cf4d8",
+    "packages": [
+      {
+        "id": "org.sgs.base",
+        "version": "1.0.0",
+        "api_version": "1.0",
+        "repository_url": "https://github.com/cy12131/sgs-base-package.git",
+        "commit": "1111111111111111111111111111111111111111",
+        "manifest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependencies": []
+      },
+      {
+        "id": "org.sgs.standard",
+        "version": "1.0.0",
+        "api_version": "1.0",
+        "repository_url": "https://github.com/cy12131/sgs-standard-package.git",
+        "commit": "2222222222222222222222222222222222222222",
+        "manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "dependencies": ["org.sgs.base"]
+      }
+    ],
+    "sync_timeout_ms": 120000
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "scenario": "lua_process_exits_before_game_finished",
+  "game_id": "game-0001",
+  "observed": { "pipe_eof": true, "exit_code": 23, "outstanding_tokens": ["request_A1b2C3d4E5"] },
+  "expected": ["state_failed", "cancel_outstanding_requests", "notify_clients_generic_failure", "close_pipes", "async_reap_once"]
+}

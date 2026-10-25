@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sgs.example/schemas/package-sync.schema.json",
+  "title": "SGS Package Sync v1 Messages",
+  "oneOf": [
+    { "$ref": "#/$defs/getPackageManifest" },
+    { "$ref": "#/$defs/packageManifestResult" },
+    { "$ref": "#/$defs/packageReady" },
+    { "$ref": "#/$defs/packageReadyResult" },
+    { "$ref": "#/$defs/packageManifestChanged" }
+  ],
+  "$defs": {
+    "requestId": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "commit": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
+    "packageId": { "type": "string", "minLength": 3, "maxLength": 128, "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*)+$" },
+    "semver": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$" },
+    "apiVersion": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "error": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "message", "retryable"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}$" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "retryable": { "type": "boolean" },
+        "details": { "type": "object" }
+      }
+    },
+    "package": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "version", "api_version", "repository_url", "commit", "manifest_sha256", "dependencies"],
+      "properties": {
+        "id": { "$ref": "#/$defs/packageId" },
+        "version": { "$ref": "#/$defs/semver" },
+        "api_version": { "$ref": "#/$defs/apiVersion" },
+        "repository_url": { "type": "string", "format": "uri", "pattern": "^(?:https|ssh)://" },
+        "commit": { "$ref": "#/$defs/commit" },
+        "manifest_sha256": { "$ref": "#/$defs/hash" },
+        "dependencies": { "type": "array", "uniqueItems": true, "maxItems": 128, "items": { "$ref": "#/$defs/packageId" } }
+      }
+    },
+    "getPackageManifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "request_id", "payload"],
+      "properties": {
+        "type": { "const": "GetPackageManifest" }, "request_id": { "$ref": "#/$defs/requestId" },
+        "payload": { "type": "object", "additionalProperties": false, "properties": { "known_manifest_id": { "$ref": "#/$defs/hash" } } }
+      }
+    },
+    "packageManifestResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "request_id", "payload"],
+      "properties": {
+        "type": { "const": "PackageManifestResult" }, "request_id": { "$ref": "#/$defs/requestId" },
+        "payload": {
+          "type": "object", "additionalProperties": false,
+          "required": ["manifest_id", "packages", "sync_timeout_ms"],
+          "properties": {
+            "manifest_id": { "$ref": "#/$defs/hash" },
+            "packages": { "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/package" } },
+            "sync_timeout_ms": { "type": "integer", "minimum": 1000, "maximum": 1800000 }
+          }
+        }
+      }
+    },
+    "packageReady": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "request_id", "payload"],
+      "properties": {
+        "type": { "const": "PackageReady" }, "request_id": { "$ref": "#/$defs/requestId" },
+        "payload": { "type": "object", "additionalProperties": false, "required": ["manifest_id"], "properties": { "manifest_id": { "$ref": "#/$defs/hash" } } }
+      }
+    },
+    "packageReadyResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "request_id", "payload"],
+      "properties": {
+        "type": { "const": "PackageReadyResult" }, "request_id": { "$ref": "#/$defs/requestId" },
+        "payload": {
+          "type": "object", "additionalProperties": false, "required": ["ready"],
+          "properties": { "ready": { "type": "boolean" }, "error": { "$ref": "#/$defs/error" } },
+          "allOf": [
+            { "if": { "properties": { "ready": { "const": false } } }, "then": { "required": ["error"] } },
+            { "if": { "properties": { "ready": { "const": true } } }, "then": { "not": { "required": ["error"] } } }
+          ]
+        }
+      }
+    },
+    "packageManifestChanged": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "payload"],
+      "properties": {
+        "type": { "const": "PackageManifestChanged" },
+        "payload": { "type": "object", "additionalProperties": false, "required": ["manifest_id"], "properties": { "manifest_id": { "$ref": "#/$defs/hash" } } }
+      }
+    }
+  }
+}

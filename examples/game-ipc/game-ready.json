@@ -1,0 +1,8 @@
+{
+  "ipc_version": "1",
+  "type": "GameReady",
+  "game_id": "game-0001",
+  "sequence": "1",
+  "request_token": "init_A1b2C3d4E5f6",
+  "payload": { "mode_id": "standard" }
+}

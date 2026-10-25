@@ -1,0 +1,11 @@
+{
+  "ipc_version": "1",
+  "type": "GameOutput",
+  "game_id": "game-0001",
+  "sequence": "4",
+  "payload": {
+    "recipients": ["player-a", "player-b"],
+    "output_type": "private_hand",
+    "data": { "visibility": "private", "owner": "player-a", "cards": ["card-7", "card-9"] }
+  }
+}

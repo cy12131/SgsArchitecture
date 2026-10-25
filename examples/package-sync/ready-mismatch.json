@@ -1,0 +1,20 @@
+{
+  "required_manifest_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "message": {
+    "type": "PackageReady",
+    "request_id": "3",
+    "payload": { "manifest_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+  },
+  "expected_response": {
+    "type": "PackageReadyResult",
+    "request_id": "3",
+    "payload": {
+      "ready": false,
+      "error": {
+        "code": "MANIFEST_ID_MISMATCH",
+        "message": "Client package manifest does not match the current server requirement",
+        "retryable": true
+      }
+    }
+  }
+}

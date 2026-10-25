@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sgs.example/schemas/package-manifest.schema.json",
+  "title": "SGS Package Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "name", "version", "api_version", "dependencies", "server", "client"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "$ref": "#/$defs/packageId" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "version": { "$ref": "#/$defs/semver" },
+    "api_version": { "$ref": "#/$defs/apiVersion" },
+    "dependencies": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "version"],
+        "properties": {
+          "id": { "$ref": "#/$defs/packageId" },
+          "version": { "$ref": "#/$defs/semverRange" }
+        }
+      }
+    },
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry"],
+      "properties": { "entry": { "$ref": "#/$defs/luaPath" } }
+    },
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["qml_entry"],
+      "properties": { "qml_entry": { "$ref": "#/$defs/qmlPath" } }
+    }
+  },
+  "$defs": {
+    "packageId": { "type": "string", "minLength": 3, "maxLength": 128, "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*)+$" },
+    "semver": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$" },
+    "apiVersion": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "semverRange": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^(?:\\*|(?:=|>=|<=|>|<)?(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?: +(?:=|>=|<=|>|<)?(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?)*)$" },
+    "relativePath": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)[^\\u0000]+$" },
+    "luaPath": { "allOf": [{ "$ref": "#/$defs/relativePath" }, { "pattern": "\\.lua$" }] },
+    "qmlPath": { "allOf": [{ "$ref": "#/$defs/relativePath" }, { "pattern": "\\.qml$" }] }
+  }
+}

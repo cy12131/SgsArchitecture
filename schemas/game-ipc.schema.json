@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sgs.example/schemas/game-ipc.schema.json",
+  "title": "SGS GameIPC/1 Messages",
+  "oneOf": [
+    { "$ref": "#/$defs/initGame" }, { "$ref": "#/$defs/gameReady" },
+    { "$ref": "#/$defs/playerAction" }, { "$ref": "#/$defs/playerRequest" },
+    { "$ref": "#/$defs/playerReply" }, { "$ref": "#/$defs/gameOutput" },
+    { "$ref": "#/$defs/gameFinished" }, { "$ref": "#/$defs/gameFailed" },
+    { "$ref": "#/$defs/shutdown" }
+  ],
+  "$defs": {
+    "gameId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{8,128}$" },
+    "sequence": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
+    "token": { "type": "string", "minLength": 16, "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
+    "playerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9_.:-]+$" },
+    "error": {
+      "type": "object", "additionalProperties": false, "required": ["code", "message", "retryable"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}$" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "retryable": { "type": "boolean" }, "details": { "type": "object" }
+      }
+    },
+    "base": {
+      "type": "object", "required": ["ipc_version", "type", "game_id", "sequence", "payload"],
+      "properties": {
+        "ipc_version": { "const": "1" }, "type": { "type": "string" },
+        "game_id": { "$ref": "#/$defs/gameId" }, "sequence": { "$ref": "#/$defs/sequence" },
+        "request_token": { "$ref": "#/$defs/token" }, "payload": { "type": "object" }
+      }
+    },
+    "initGame": {
+      "allOf": [{ "$ref": "#/$defs/base" }, {
+        "type": "object", "additionalProperties": false, "required": ["request_token"],
+        "properties": {
+          "ipc_version": true, "game_id": true, "sequence": true, "request_token": true,
+          "type": { "const": "InitGame" },
+          "payload": {
+            "type": "object", "additionalProperties": false, "required": ["mode_id", "seed", "players", "packages"],
+            "properties": {
+              "mode_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+              "seed": { "type": "string", "pattern": "^[0-9]{1,20}$" },
+              "players": { "type": "array", "minItems": 2, "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/playerId" } },
+              "packages": { "type": "array", "maxItems": 256, "items": { "type": "object", "additionalProperties": false, "required": ["id", "commit"], "properties": { "id": { "type": "string" }, "commit": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" } } } }
+            }
+          }
+        }
+      }]
+    },
+    "gameReady": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["request_token"], "properties": { "ipc_version": true, "game_id": true, "sequence": true, "request_token": true, "type": { "const": "GameReady" }, "payload": { "type": "object", "additionalProperties": false, "required": ["mode_id"], "properties": { "mode_id": { "type": "string", "minLength": 1, "maxLength": 128 } } } } }]
+    },
+    "playerAction": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "properties": { "ipc_version": true, "game_id": true, "sequence": true, "type": { "const": "PlayerAction" }, "payload": { "type": "object", "additionalProperties": false, "required": ["player_id", "action_type", "data"], "properties": { "player_id": { "$ref": "#/$defs/playerId" }, "action_type": { "type": "string", "minLength": 1, "maxLength": 128 }, "data": {} } } } }]
+    },
+    "playerRequest": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["request_token"], "properties": { "ipc_version": true, "game_id": true, "sequence": true, "request_token": true, "type": { "const": "PlayerRequest" }, "payload": { "type": "object", "additionalProperties": false, "required": ["recipients", "request_type", "deadline_ms", "public_data", "private_data"], "properties": { "recipients": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/playerId" } }, "request_type": { "type": "string", "minLength": 1, "maxLength": 128 }, "deadline_ms": { "type": "integer", "minimum": 1, "maximum": 600000 }, "public_data": {}, "private_data": { "type": "object", "additionalProperties": true } } } } }]
+    },
+    "playerReply": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["request_token"], "properties": { "ipc_version": true, "game_id": true, "sequence": true, "request_token": true, "type": { "const": "PlayerReply" }, "payload": { "type": "object", "additionalProperties": false, "required": ["player_id", "data"], "properties": { "player_id": { "$ref": "#/$defs/playerId" }, "data": {}, "cancelled": { "type": "boolean" } } } } }]
+    },
+    "gameOutput": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "properties": { "ipc_version": true, "game_id": true, "sequence": true, "type": { "const": "GameOutput" }, "payload": { "type": "object", "additionalProperties": false, "required": ["recipients", "output_type", "data"], "properties": { "recipients": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/playerId" } }, "output_type": { "type": "string", "minLength": 1, "maxLength": 128 }, "data": {} } } } }]
+    },
+    "gameFinished": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "properties": { "ipc_version": true, "game_id": true, "sequence": true, "type": { "const": "GameFinished" }, "payload": { "type": "object", "additionalProperties": false, "required": ["result"], "properties": { "result": { "type": "object" } } } } }]
+    },
+    "gameFailed": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "properties": { "ipc_version": true, "game_id": true, "sequence": true, "type": { "const": "GameFailed" }, "payload": { "type": "object", "additionalProperties": false, "required": ["error"], "properties": { "error": { "$ref": "#/$defs/error" } } } } }]
+    },
+    "shutdown": {
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "properties": { "ipc_version": true, "game_id": true, "sequence": true, "type": { "const": "Shutdown" }, "payload": { "type": "object", "additionalProperties": false, "required": ["reason"], "properties": { "reason": { "type": "string", "minLength": 1, "maxLength": 256 } } } } }]
+    }
+  }
+}

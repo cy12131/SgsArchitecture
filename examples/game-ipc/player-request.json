@@ -1,0 +1,14 @@
+{
+  "ipc_version": "1",
+  "type": "PlayerRequest",
+  "game_id": "game-0001",
+  "sequence": "2",
+  "request_token": "request_A1b2C3d4E5",
+  "payload": {
+    "recipients": ["player-a"],
+    "request_type": "choose_card",
+    "deadline_ms": 15000,
+    "public_data": { "count": 1 },
+    "private_data": { "player-a": { "card_ids": ["card-7", "card-9"] } }
+  }
+}
