@@ -1,0 +1,23 @@
+{
+  "scenario": "restart_required_package_activation",
+  "boot_generation": {
+    "manifest_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "commit": "1111111111111111111111111111111111111111"
+  },
+  "admin_disk_update": {
+    "operation": "update",
+    "desired_commit": "2222222222222222222222222222222222222222"
+  },
+  "before_restart": {
+    "effective_manifest_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "lua_commit": "1111111111111111111111111111111111111111",
+    "package_manifest_changed_sent": false
+  },
+  "after_normal_restart": {
+    "candidate_validation": "success",
+    "effective_commit": "2222222222222222222222222222222222222222",
+    "client_state": "NotReady",
+    "required_client_action": "GetPackageManifest_then_sync_then_PackageReady"
+  },
+  "expected": "disk_update_does_not_change_runtime_generation"
+}

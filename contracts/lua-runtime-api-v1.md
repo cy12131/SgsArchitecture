@@ -19,13 +19,13 @@ sgs-lua-runtime --game-id <id> --package-root <immutable-dir> --ipc-read <handle
 ```
 
 - 父进程为每局创建专用工作目录；不得把 Git 工作树或可写安装目录作为 cwd。
-- `package-root` 是父进程为当前 `manifest_id` 准备的只读、不可变视图，只包含锁定 commit。Lua 进程没有 Git 凭据、网络下载能力，也不得解析分支/标签。
+- `package-root` 是父进程从本次 SgsServer 启动时锁定 generation 为当前 `manifest_id` 准备的只读、不可变视图，只包含锁定 commit。Lua 进程没有 Git 凭据、网络下载能力，也不得解析分支/标签。
 - 父进程按 Manifest 依赖拓扑顺序生成允许的 Lua 搜索路径；只加入各包根和框架运行时目录。禁止继承用户 `LUA_PATH`/`LUA_CPATH`。
 - 进程启动后首先等待 `InitGame`。`game_id` 必须匹配启动参数；`manifest_id`、包 ID/commit、玩家 ID/座位必须与父进程的启动记录一致。
 - Runtime 按依赖顺序加载声明了 `server.entry` 的包，完成注册后选择唯一 `mode_id`，创建 Game/GameLogic，再回送关联 Init token 的 `GameReady` 和实际加载包列表。
 - 缺包、commit 不符、入口异常、重复注册、模式缺失或玩家设置非法时发送 `GameFailed`（若 IPC 可用）并以非零码退出；不得发送 GameReady。
 - `Shutdown` 停止接收新动作，取消所有 Request，运行幂等 cleanup，发送不了终态时也必须退出。EOF、父进程消失或写队列失败走相同清理路径。
-- Runtime 不自行拉取“最新版本”，也不在启动后改变包集合；热更新只影响后续新对局。
+- Runtime 不自行拉取“最新版本”，也不在启动后改变包集合；同一 SgsServer 进程内随后创建的新对局仍使用服务器启动时锁定的 generation。包变更只能在 SgsServer 正常重启后影响对局。
 
 ## Game API
 
@@ -149,5 +149,5 @@ return pkg
 ## Open Questions
 
 - freekill-core 的哪些事件阶段和 utility helper 应成为稳定最小面，哪些保留在兼容包内？
-- skill/trigger 的热卸载是否支持；建议 M3 对局创建后冻结注册表。
+- skill/trigger 热卸载已由 ADR-0009 排除；本 Draft 只保留静态注册与清理 API，不得据此实现运行时包卸载。
 - 确定性重放需要记录随机调用还是输入流；建议先记录 seed + 全部已验证输入并做交叉验证。

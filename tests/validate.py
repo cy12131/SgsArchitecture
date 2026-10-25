@@ -252,8 +252,20 @@ def main() -> int:
     if empty_ready["data"]["manifest_id"] == current_manifest_id:
         package_state = "Ready"
     assert package_state == "Ready"
-    package_state = "NotReady"  # Disconnect and PackageManifestChanged both clear it.
+    package_state = "NotReady"  # Disconnect clears connection-local readiness.
     assert package_state == "NotReady"
+
+    activation = load("examples/package-sync/restart-required-activation.json")
+    boot = activation["boot_generation"]
+    before_restart = activation["before_restart"]
+    after_restart = activation["after_normal_restart"]
+    assert before_restart["effective_manifest_id"] == boot["manifest_id"]
+    assert before_restart["lua_commit"] == boot["commit"]
+    assert before_restart["package_manifest_changed_sent"] is False
+    assert activation["admin_disk_update"]["desired_commit"] != before_restart["lua_commit"]
+    assert after_restart["candidate_validation"] == "success"
+    assert after_restart["effective_commit"] == activation["admin_disk_update"]["desired_commit"]
+    assert after_restart["client_state"] == "NotReady"
 
     base_boundary = package_manifest_result_with_url_suffix(0)
     exact_padding = 65536 - len(encoded_sgs1_body(base_boundary))
@@ -369,6 +381,9 @@ def main() -> int:
     lua_contract = (ROOT / "contracts/lua-runtime-api-v1.md").read_text(encoding="utf-8")
     qml_contract = (ROOT / "contracts/qml-extension-api-v1.md").read_text(encoding="utf-8")
     ipc_contract = (ROOT / "contracts/game-ipc-v1.md").read_text(encoding="utf-8")
+    manifest_contract = (ROOT / "contracts/package-manifest-v1.md").read_text(encoding="utf-8")
+    sync_contract = (ROOT / "contracts/package-sync-v1.md").read_text(encoding="utf-8")
+    activation_adr = (ROOT / "decisions/0009-restart-required-package-activation.md").read_text(encoding="utf-8")
     for message_type in (
         "InitGame", "GameReady", "PlayerAction", "PlayerRequest", "PlayerReply",
         "GameOutput", "GameFinished", "GameFailed", "Shutdown",
@@ -376,13 +391,20 @@ def main() -> int:
         assert message_type in ipc_contract
     for draft_contract in (lua_contract, qml_contract):
         assert "Draft" in draft_contract and "Implementation Candidate" in draft_contract
+    for lifecycle_contract in (manifest_contract, sync_contract, activation_adr):
+        assert "restart-required" in lifecycle_contract
+        assert "热卸载" in lifecycle_contract and "后台自动重载" in lifecycle_contract
+    assert "管理员包操作不会触发" in sync_contract
+    assert "启动时锁定" in ipc_contract
+    assert "随后创建的新对局仍使用服务器启动时锁定的 generation" in lua_contract
 
     fixture_count = len(list(EXAMPLES.rglob("*.json")))
 
     print("PASS: 3 schemas are valid Draft 2020-12 schemas")
-    print(f"PASS: {fixture_count} JSON fixtures cover package forms, SGS/1 compatibility, RFC 8785, dependencies, IPC, exit, and secrecy")
+    print(f"PASS: {fixture_count} JSON fixtures cover package forms, restart activation, SGS/1 compatibility, RFC 8785, dependencies, IPC, exit, and secrecy")
     print("PASS: generated PackageManifestResult boundary cases are 65536 bytes accepted and 65537 bytes rejected for sending")
     print("PASS: minimal bridge validates per-direction sequences, token/target authority, timeout/default, and private views")
+    print("PASS: package administration remains disk-only until restart; boot generation stays immutable for sync and Lua games")
     print("PASS: expected-invalid cases were rejected by their designated validation layer")
     return 0
 

@@ -92,6 +92,7 @@
       }
     },
     "packageManifestChanged": {
+      "description": "Reserved notification. M3 administrators do not trigger it because package activation requires a server restart.",
       "type": "object", "additionalProperties": false,
       "required": ["protocol", "type", "request_id", "data"],
       "properties": {

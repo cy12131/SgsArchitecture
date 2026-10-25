@@ -25,9 +25,17 @@
 - `PackageManifestResult`：响应，返回 `manifest_id`、有序 `packages` 和 `sync_timeout_ms`。
 - `PackageReady`：请求，客户端完成原子切换后回报 `manifest_id`。
 - `PackageReadyResult`：响应，`data.ready=true`；失败时 `ready=false` 并带结构化 `error`。
-- `PackageManifestChanged`：服务端通知，`request_id=0`；只携带新 `manifest_id`，客户端随后发送新请求获取详情。
+- `PackageManifestChanged`：预留服务端通知，`request_id=0`；只携带新 `manifest_id`。M3 保留 Schema，但管理员包操作不会触发该消息。
 
 PackageReady 内嵌错误结构为 `{code, message, retryable, details?}`。SGS/1 公共错误继续使用标准 `Error` 信封和 `{code,message}` data，不混用内嵌错误结构。
+
+## 服务端有效清单生命周期
+
+Package Sync 遵循 **restart-required activation**。SgsServer 明确区分三类状态：磁盘注册表中的“下次启动期望配置”、当前进程的“启动时有效清单”、客户端本地缓存。管理员添加、更新、启用或停用包，只原子更新第一类状态；不得改变当前进程的有效清单或 `manifest_id`。
+
+正常启动时，服务器读取一次期望配置，验证 commit、Manifest、依赖、API 兼容性和单帧大小，计算 `manifest_id`，然后锁定不可变 package generation。所有 Package Sync 响应及本进程创建的 Lua 游戏均只引用该 generation。运行期间不轮询目录/注册表，不热加载、热卸载、热替换或后台自动重载。新配置只在下一次正常重启并通过完整验证后生效。
+
+`PackageManifestChanged` 仅为未来版本预留。本版本不会因为管理操作发送它，也不会在运行时产生新的有效清单。若未来版本启用该通知，必须另立 ADR 并定义 generation 切换与在局安全语义；不得把预留消息解释为已有热更新能力。
 
 ## 连接兼容性与大厅门禁
 
@@ -40,7 +48,8 @@ PackageReady 内嵌错误结构为 `{code, message, retryable, details?}`。SGS/
 5. `NotReady` 客户端发送 `EnterLobby` 时，服务端返回标准 SGS/1 `Error`，回显该请求 ID，`data.code` 为 `PACKAGE_PROTOCOL_REQUIRED`。写完错误后默认保持 TCP 连接，允许客户端继续协商。
 6. 未 Ready 的连接不得进入大厅、创建房间或加入房间。CreateRoom/JoinRoom 仍需原有大厅状态，并额外要求当前清单 Ready。
 7. 断线立即清除该 Session 的 Ready 状态；重连从 NotReady 开始，不复用旧连接确认。
-8. `PackageManifestChanged` 将连接状态重新置为 NotReady；客户端必须针对新摘要重新完成同步确认。
+8. 客户端每次重连都从 NotReady 开始，重新获取启动时有效清单并执行版本同步；本版本不依赖缓存摘要直接恢复 Ready。
+9. 预留语义仍规定：若客户端收到合法 `PackageManifestChanged`，必须置为 NotReady 并重新协商；但 M3 服务端不发送该通知。
 
 该门禁使不知道 Package Sync 的旧客户端仍可使用原有握手和诊断消息，但无法进入 M3 大厅，不需要修改 Hello 信封或主动关闭连接。
 
@@ -69,10 +78,10 @@ PackageReady 内嵌错误结构为 `{code, message, retryable, details?}`。SGS/
 1. 服务端先完成清单 Schema/依赖验证和 `manifest_id` 计算。
 2. 随后使用实际发送所采用的 JSON 序列化器，编码完整 `{protocol,type,request_id,data}` 消息。
 3. 只计算 UTF-8 JSON 正文字节，不含四字节长度头；结果必须在 `1..65536` 字节。
-4. 若超过 65536 字节，禁止发送、截断或拆帧，启用事务以 `PACKAGE_MANIFEST_TOO_LARGE` 失败并保留上一份有效清单及其摘要。
+4. 若超过 65536 字节，禁止发送、截断或拆帧；该下次启动候选不能成为有效清单，`PACKAGE_MANIFEST_TOO_LARGE` 记入管理/启动诊断，并保留上一份 last-known-good 有效清单及其摘要。
 5. 若请求处理阶段仍检测到该内部配置错误，服务端返回能够放入单帧的标准 SGS/1 `Error`，code 为 `PACKAGE_MANIFEST_TOO_LARGE`；连接保持可用。
 
-大小取决于完整 JSON 的实际 UTF-8 编码，包括信封、仓库 URL、包 ID、依赖和转义字符，不得仅以包数量估算。管理员工具应在提交启用事务前执行同一编码检查。本版本不引入分页协议。
+大小取决于完整 JSON 的实际 UTF-8 编码，包括信封、仓库 URL、包 ID、依赖和转义字符，不得仅以包数量估算。管理员工具应在写入下次启动期望配置前执行同一编码检查；服务器启动激活仍必须复验。本版本不引入分页协议。
 
 ## 客户端事务
 
@@ -89,7 +98,8 @@ PackageReady 内嵌错误结构为 `{code, message, retryable, details?}`。SGS/
 - 空 `packages` 是合法要求；客户端应原子切换到空的服务器要求集合（内建框架资源不受影响）并 Ready。
 - 超时、Git 失败、哈希失败、依赖失败或不兼容均使事务失败，不破坏上一个可用集合。
 - 客户端断线时，服务端取消该连接的待处理请求/计时器和 Ready 状态；客户端清理未提交临时目录，已验证缓存可保留。
-- `PackageManifestChanged` 使旧 Ready 状态失效；进行中的旧事务可取消，其结果不得提交。
+- 当前进程的有效清单不变，因此管理员操作不取消已 Ready 连接或进行中的同步；`PackageManifestChanged` 的失效语义仅为未来协议预留。
+- 重启会关闭旧连接；客户端重连后必须重新 Get/同步/Ready，即使本地缓存的 `manifest_id` 与新响应相同。
 - 错误可重试仅由 `retryable` 指示；协议/schema/API 不兼容通常不可重试。
 - 同步工作必须在工作线程/异步任务中进行，不阻塞客户端 UI 或服务端网络事件循环。
 

@@ -12,7 +12,7 @@ GameIPC/1 是 SgsServer C++ 父进程和每个活跃对局的独立 Lua 子进�
 
 消息类型：
 
-- 父→子 `InitGame`：当前 `manifest_id`、锁定包、模式、玩家/座位、设置和确定性 seed。
+- 父→子 `InitGame`：SgsServer 本次启动时锁定的 `manifest_id` 与包、模式、玩家/座位、设置和确定性 seed；不得从磁盘待生效注册表取值。
 - 子→父 `GameReady`：初始化完成；必须关联 Init token，并回报 Runtime API 版本和实际加载包。
 - 父→子 `PlayerAction`：已经过连接身份绑定的玩家动作。
 - 子→父 `PlayerRequest`：向一个或多个明确玩家请求操作，含 deadline、完成/取消/断线策略、默认回复和公开/私有提示。

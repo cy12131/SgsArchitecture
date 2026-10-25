@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1-draft - 2026-10-25
+
+- 采用 restart-required package activation；管理操作只写磁盘期望配置，不改变当前服务器进程的有效清单。
+- 规定 SgsServer 启动时验证并锁定单一 package generation，所有 Lua 对局均使用该 generation。
+- 将 `PackageManifestChanged` 保留为协议预留消息，但 M3 不因管理操作发送，也不实现热卸载、热替换或后台自动重载。
+- 增加重启生效状态向量和静态一致性检查。
+
 ## 0.2.0-draft - 2026-10-25
 
 - 细化独立 Lua 进程启动、Game/GameEvent/TriggerEvent、Content 注册和清理语义。

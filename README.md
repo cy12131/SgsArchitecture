@@ -2,7 +2,7 @@
 
 SGS 跨仓库架构规范、协议契约、机器可验证 Schema、示例和架构决策记录。
 
-当前规范版本：`0.2.0-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
+当前规范版本：`0.2.1-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
 
 ## 稳定性
 
@@ -40,6 +40,8 @@ python tests/validate.py
 包清单固定命名为 `manifest.json`；服务端 Lua、客户端 QML 和资源入口按包能力选填。仓库 URL 与锁定 commit 是服务器安装注册信息，不属于包自身 Manifest。
 
 每条客户端连接必须在 EnterLobby 前确认当前资源包摘要；空清单也需确认。PackageManifestResult 必须适配 SGS/1 的 65536 字节单帧正文上限。
+
+资源包采用 **restart-required activation**：管理员的添加、更新、启用和停用只修改磁盘注册表；SgsServer 在正常启动时验证并锁定一次有效清单，运行期间不热更新、热卸载、热替换或后台重载。客户端每次重连都重新获取并确认该启动 generation。
 
 ## Open Questions
 

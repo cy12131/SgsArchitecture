@@ -10,7 +10,7 @@
 
 ## 动态页面加载
 
-1. Manifest/Package Sync 完成后，客户端建立当前锁定包集合的只读 generation；对局期间不切换 generation。
+1. Manifest/Package Sync 完成后，客户端建立服务器本次启动时锁定包集合的只读 generation；对局及该连接期间不会因管理员包操作切换 generation。
 2. GameMode 注册给出 `ui_package_id` 和 `ui_mode`。宿主在该包的 `client.qml_entry` 创建组件，并核对导出的 `packageId`、`apiVersion`、`supportedModes`。
 3. 基础 import 只允许 QtQuick、SGS 公开模块、当前包 QML 模块及其声明依赖。依赖根按 Manifest 拓扑顺序加入受控 import path；禁止环境变量或任意本地目录。
 4. 组件经历 `Loading → Creating → Active`。解析、import、元数据或初始化失败进入 `Fallback`，显示框架错误页；不得尝试其他 commit 的同名组件。
@@ -97,7 +97,7 @@ Closing → disconnect signals/timers → clear models → destroy page/context
 - 路径必须出现在 Manifest resources 或 QML 入口树下，并通过包根逃逸/符号链接检查。
 - QML 组件由包内 `qmldir` 或显式相对 import 定位；模块 URI 必须在包命名空间内。依赖包只能按声明依赖访问。
 - 缺资源返回无效 URL 和 `RESOURCE_NOT_FOUND`，不得静默回退到其他包同名文件。
-- 活跃对局固定 package generation；资源包更新不热替换现有页面。退出对局并销毁旧 engine/component 后，新对局才使用新 generation。
+- 活跃对局固定 package generation；资源包更新不热替换现有页面。同一服务器进程中的新对局也继续使用启动 generation；服务器正常重启、客户端重连并完成 Package Sync 后才可能使用新 generation。
 - 武将皮肤、语音和动态立绘的最终命名/绑定规则本 Draft 不冻结。
 
 ## 错误处理
