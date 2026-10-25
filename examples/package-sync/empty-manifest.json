@@ -1,7 +1,8 @@
 {
+  "protocol": 1,
   "type": "PackageManifestResult",
-  "request_id": "1",
-  "payload": {
+  "request_id": 1,
+  "data": {
     "manifest_id": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
     "packages": [],
     "sync_timeout_ms": 30000

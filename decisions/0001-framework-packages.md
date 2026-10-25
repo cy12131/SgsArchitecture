@@ -9,7 +9,7 @@ SGS 需要持续增加模式、卡牌、武将、技能和专属 UI，同时保�
 
 ## Decision
 
-SgsServer/SgsClient 只提供通用网络、用户/房间、运行时、资源加载和扩展接口；游戏内容与专属 UI 主要位于独立 packages。
+SgsServer/SgsClient 只提供通用网络、用户/房间、运行时、资源加载和扩展接口；游戏内容与专属 UI 主要位于独立 packages。每个包以根目录 `manifest.json` 声明能力，服务端 Lua、客户端 QML 和纯资源可以独立或组合存在，不要求无关入口。
 
 ## Consequences
 

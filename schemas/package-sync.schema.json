@@ -10,7 +10,7 @@
     { "$ref": "#/$defs/packageManifestChanged" }
   ],
   "$defs": {
-    "requestId": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
+    "requestId": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
     "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "commit": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
     "packageId": { "type": "string", "minLength": 3, "maxLength": 128, "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*)+$" },
@@ -41,18 +41,20 @@
     },
     "getPackageManifest": {
       "type": "object", "additionalProperties": false,
-      "required": ["type", "request_id", "payload"],
+      "required": ["protocol", "type", "request_id", "data"],
       "properties": {
-        "type": { "const": "GetPackageManifest" }, "request_id": { "$ref": "#/$defs/requestId" },
-        "payload": { "type": "object", "additionalProperties": false, "properties": { "known_manifest_id": { "$ref": "#/$defs/hash" } } }
+        "protocol": { "const": 1 }, "type": { "const": "GetPackageManifest" },
+        "request_id": { "$ref": "#/$defs/requestId" },
+        "data": { "type": "object", "additionalProperties": false, "properties": { "known_manifest_id": { "$ref": "#/$defs/hash" } } }
       }
     },
     "packageManifestResult": {
       "type": "object", "additionalProperties": false,
-      "required": ["type", "request_id", "payload"],
+      "required": ["protocol", "type", "request_id", "data"],
       "properties": {
-        "type": { "const": "PackageManifestResult" }, "request_id": { "$ref": "#/$defs/requestId" },
-        "payload": {
+        "protocol": { "const": 1 }, "type": { "const": "PackageManifestResult" },
+        "request_id": { "$ref": "#/$defs/requestId" },
+        "data": {
           "type": "object", "additionalProperties": false,
           "required": ["manifest_id", "packages", "sync_timeout_ms"],
           "properties": {
@@ -65,18 +67,20 @@
     },
     "packageReady": {
       "type": "object", "additionalProperties": false,
-      "required": ["type", "request_id", "payload"],
+      "required": ["protocol", "type", "request_id", "data"],
       "properties": {
-        "type": { "const": "PackageReady" }, "request_id": { "$ref": "#/$defs/requestId" },
-        "payload": { "type": "object", "additionalProperties": false, "required": ["manifest_id"], "properties": { "manifest_id": { "$ref": "#/$defs/hash" } } }
+        "protocol": { "const": 1 }, "type": { "const": "PackageReady" },
+        "request_id": { "$ref": "#/$defs/requestId" },
+        "data": { "type": "object", "additionalProperties": false, "required": ["manifest_id"], "properties": { "manifest_id": { "$ref": "#/$defs/hash" } } }
       }
     },
     "packageReadyResult": {
       "type": "object", "additionalProperties": false,
-      "required": ["type", "request_id", "payload"],
+      "required": ["protocol", "type", "request_id", "data"],
       "properties": {
-        "type": { "const": "PackageReadyResult" }, "request_id": { "$ref": "#/$defs/requestId" },
-        "payload": {
+        "protocol": { "const": 1 }, "type": { "const": "PackageReadyResult" },
+        "request_id": { "$ref": "#/$defs/requestId" },
+        "data": {
           "type": "object", "additionalProperties": false, "required": ["ready"],
           "properties": { "ready": { "type": "boolean" }, "error": { "$ref": "#/$defs/error" } },
           "allOf": [
@@ -88,10 +92,11 @@
     },
     "packageManifestChanged": {
       "type": "object", "additionalProperties": false,
-      "required": ["type", "payload"],
+      "required": ["protocol", "type", "request_id", "data"],
       "properties": {
-        "type": { "const": "PackageManifestChanged" },
-        "payload": { "type": "object", "additionalProperties": false, "required": ["manifest_id"], "properties": { "manifest_id": { "$ref": "#/$defs/hash" } } }
+        "protocol": { "const": 1 }, "type": { "const": "PackageManifestChanged" },
+        "request_id": { "const": 0 },
+        "data": { "type": "object", "additionalProperties": false, "required": ["manifest_id"], "properties": { "manifest_id": { "$ref": "#/$defs/hash" } } }
       }
     }
   }

@@ -2,7 +2,7 @@
 
 状态：**Draft**。等待 SgsClient 对真实包的动态加载、销毁、错误回退和多分辨率测试后再冻结。
 
-客户端从已验证 commit 的包根加载 `client.qml_entry`。包 QML 运行在受控引擎/导入路径中，不得自行决定 Git 来源或活动 commit。
+对于声明了 `client.qml_entry` 的包，客户端从已验证 commit 的包根加载该入口。未声明 QML 入口的服务端包或纯资源包不创建页面。包 QML 运行在受控引擎/导入路径中，不得自行决定 Git 来源或活动 commit。
 
 ## 注册与选择
 

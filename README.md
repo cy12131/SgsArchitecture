@@ -2,13 +2,13 @@
 
 SGS 跨仓库架构规范、协议契约、机器可验证 Schema、示例和架构决策记录。
 
-当前规范版本：`0.1.0-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
+当前规范版本：`0.1.1-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
 
 ## 稳定性
 
 - `Package Manifest v1`、`Package Sync v1`、`GameIPC/1`：M3 实现基线；破坏性修改必须记录 ADR 和 CHANGELOG。
 - `Lua Runtime API v1`、`QML Extension API v1`：**Draft**，分别等待最小规则包验证和真实动态加载测试，尚未冻结。
-- M1/M2 的 SGS/1 四字节大端长度帧、UTF-8 JSON 和已有基础消息语义保持不变。
+- M1/M2 的 SGS/1 四字节大端长度帧、UTF-8 JSON 和 `{protocol,type,request_id,data}` 信封保持不变；GameIPC/1 独立使用自己的 `ipc_version` 和 `payload`。
 
 ## 目录
 
@@ -25,7 +25,7 @@ python -m pip install -r requirements-test.txt
 python tests/validate.py
 ```
 
-验证器检查 Schema 正反例，并补充 JSON Schema 无法表达的重复 ID、缺失依赖、循环依赖、`manifest_id` 和请求往返规则。
+验证器检查 Schema 正反例、RFC 8785 官方向量，并补充 JSON Schema 无法表达的重复 ID、缺失依赖、循环依赖、`manifest_id` 和请求往返规则。
 
 ## 范围边界
 
@@ -34,7 +34,7 @@ python tests/validate.py
 - packages：规则、卡牌、武将、技能、模式及游戏专属 UI。
 - Package Agent 拥有规则逻辑；框架 Agent 不把复杂规则移入 C++。
 
-仓库 URL 与锁定 commit 是服务器安装注册信息，不属于包自身 Manifest。
+包清单固定命名为 `manifest.json`；服务端 Lua、客户端 QML 和资源入口按包能力选填。仓库 URL 与锁定 commit 是服务器安装注册信息，不属于包自身 Manifest。
 
 ## Open Questions
 

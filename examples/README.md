@@ -3,11 +3,20 @@
 | 文件 | Schema | 语义 | 预期 |
 |---|---|---|---|
 | `package-manifest/valid-base.json` | 合法 | 合法 | 接受 |
+| `package-manifest/valid-server-only.json` | 合法 | 合法 | 只加载服务端 Lua |
+| `package-manifest/valid-client-only.json` | 合法 | 合法 | 只加载客户端 QML |
+| `package-manifest/valid-resources-only.json` | 合法 | 合法 | 不执行代码，只暴露资源 |
 | `package-manifest/invalid-missing-name.json` | 非法 | 未运行 | 因缺少 `name` 拒绝 |
+| `package-manifest/invalid-no-content.json` | 非法 | 未运行 | 因没有入口或资源拒绝 |
 | `package-manifest/cycle-a.json`, `cycle-b.json` | 各自合法 | 非法 | 因 A↔B 循环拒绝整组 |
 | `package-sync/empty-manifest.json` | 合法 | 合法 | 接受空要求并可 Ready |
 | `package-sync/multi-package-manifest.json` | 合法 | 合法 | core 先于 standard 加载 |
 | `package-sync/ready-mismatch.json` | 合法 | 非法 | 返回 `MANIFEST_ID_MISMATCH`，不得进入游戏 |
+| `package-sync/get-package-manifest.json` | 合法 | 合法 | 接受 SGS/1 最大合法请求 ID |
+| `package-sync/manifest-changed.json` | 合法 | 合法 | 通知使用 `request_id: 0` |
+| `package-sync/invalid-legacy-envelope.json` | 非法 | 未运行 | 拒绝字符串 ID、缺少 protocol 和 payload 信封 |
+| `rfc8785/section-3.2.2-vector.json` | 标准向量 | 合法 | 规范 UTF-8 字节及 SHA-256 必须精确匹配 |
+| `rfc8785/section-3.2.3-sorting-vector.json` | 标准向量 | 合法 | 属性按 RFC 8785 UTF-16 规则排序 |
 | `game-ipc/init-game.json`, `game-ready.json` | 合法 | 合法 | token 匹配，完成正常初始化 |
 | `game-ipc/player-request.json`, `player-reply.json` | 合法 | 合法 | token、game_id 匹配，完成一次往返 |
 | `game-ipc/process-exit.json` | 场景文件 | 合法场景 | 进入 Failed，取消请求并异步回收 |

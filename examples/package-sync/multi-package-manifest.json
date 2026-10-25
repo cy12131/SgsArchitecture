@@ -1,7 +1,8 @@
 {
+  "protocol": 1,
   "type": "PackageManifestResult",
-  "request_id": "2",
-  "payload": {
+  "request_id": 2,
+  "data": {
     "manifest_id": "1b773ff47e081a15bc050331b8beabe6e1e6ee001301ccc11c7249bfe70cf4d8",
     "packages": [
       {

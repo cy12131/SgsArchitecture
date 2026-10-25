@@ -1,0 +1,8 @@
+{
+  "protocol": 1,
+  "type": "PackageManifestChanged",
+  "request_id": 0,
+  "data": {
+    "manifest_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+}

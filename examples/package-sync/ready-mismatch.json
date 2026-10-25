@@ -1,14 +1,16 @@
 {
   "required_manifest_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "message": {
+    "protocol": 1,
     "type": "PackageReady",
-    "request_id": "3",
-    "payload": { "manifest_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+    "request_id": 3,
+    "data": { "manifest_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
   },
   "expected_response": {
+    "protocol": 1,
     "type": "PackageReadyResult",
-    "request_id": "3",
-    "payload": {
+    "request_id": 3,
+    "data": {
       "ready": false,
       "error": {
         "code": "MANIFEST_ID_MISMATCH",

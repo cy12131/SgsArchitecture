@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "org.sgs.client_ui",
+  "name": "Client UI",
+  "version": "1.0.0",
+  "api_version": "1.0",
+  "dependencies": [],
+  "client": { "qml_entry": "client/GameView.qml" },
+  "resources": ["assets/cards"]
+}

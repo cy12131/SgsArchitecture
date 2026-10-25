@@ -6,7 +6,7 @@
 
 ## 入口和注册
 
-`server.entry` 模块返回包描述表，通过只读 `Runtime` 注册：
+声明了 `server.entry` 的包，其模块返回包描述表并通过只读 `Runtime` 注册；未声明服务端入口的客户端包和纯资源包不在 Lua 进程执行：
 
 - `registerPackage(definition)`：卡牌、角色、技能及翻译等内容注册；ID 在包命名空间内唯一。
 - `registerGameMode(mode)`：模式 ID、人数范围、构建 `GameLogic` 的工厂及客户端 UI mode key。
