@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1-draft - 2026-10-26
+
+- 完成 M3-B 启动前接口审查，划分 B1 进程监管、B2 Runtime 启动、B3 Request/Event Bridge、B4 私有视图与加固。
+- 为 InitGame 补充 uint64 十进制字符串 `room_id`，明确 game/room/generation/roster 启动绑定。
+- 澄清双向 sequence、token 所有权、相对 deadline、PlayerAction/PlayerReply 身份规则、GameReady 转 Running 和私有视图路由。
+- 使 GameIPC Schema 校验 view_snapshot/view_delta profile，并新增绑定/sequence 边界向量。
+- 记录 `org.sgs.testmode` Mock 与真实 Runtime 的适配差异、M3-B/M3-C 分界、职责和逐阶段验收门槛。
+
 ## 0.3.0-draft - 2026-10-26
 
 - 归档 M3-A 双端真实跨设备集成验收；SgsServer/SgsClient 阶段标签 `v0.4.0-m3a` 已核验指向各自给定 main。

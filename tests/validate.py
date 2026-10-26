@@ -304,6 +304,10 @@ def main() -> int:
     reply = ipc["player-reply.json"]
     init = ipc["init-game.json"]
     ready = ipc["game-ready.json"]
+    assert 1 <= int(init["payload"]["room_id"]) <= 18446744073709551615
+    init_without_room = json.loads(json.dumps(init))
+    del init_without_room["payload"]["room_id"]
+    expect_invalid(ipc_v, init_without_room, "init-game-missing-room-id")
     init_player_ids = [player["player_id"] for player in init["payload"]["players"]]
     init_seats = [player["seat"] for player in init["payload"]["players"]]
     assert len(init_player_ids) == len(set(init_player_ids))
@@ -321,6 +325,23 @@ def main() -> int:
     assert safe["payload"]["recipients"] == [safe["payload"]["data"]["owner"]]
     assert unsafe["payload"]["data"]["visibility"] == "private"
     assert unsafe["payload"]["recipients"] != [unsafe["payload"]["data"]["owner"]]
+
+    action_with_token = load("examples/minimal-runtime-package/messages/03-player-action.json")
+    action_with_token["request_token"] = "action_not_allowed_0001"
+    expect_invalid(ipc_v, action_with_token, "player-action-must-not-have-request-token")
+    invalid_snapshot = load("examples/minimal-runtime-package/messages/06-view-a.json")
+    del invalid_snapshot["payload"]["data"]["revision"]
+    expect_invalid(ipc_v, invalid_snapshot, "view-snapshot-requires-revision")
+
+    m3b_cases = load("examples/game-ipc/m3-b-review-cases.json")
+    launch_record = m3b_cases["launch_record"]
+    assert str(launch_record["server_room_id_uint64"]) == launch_record["ipc_room_id"]
+    assert int(m3b_cases["valid_sequence_boundary"]) == 18446744073709551615
+    invalid_m3b = {case["name"]: case for case in m3b_cases["invalid_cases"]}
+    assert int(invalid_m3b["sequence_overflow"]["sequence"]) > 18446744073709551615
+    assert int(invalid_m3b["sequence_gap"]["sequence"]) != int(invalid_m3b["sequence_gap"]["previous"]) + 1
+    for case_name in ("room_mismatch", "generation_mismatch", "roster_mismatch"):
+        assert invalid_m3b[case_name]["expected"] == "IPC_BINDING_MISMATCH"
 
     exit_scenario = load("examples/game-ipc/process-exit.json")
     required_cleanup = {"state_failed", "cancel_outstanding_requests", "close_pipes", "async_reap_once"}
@@ -388,6 +409,8 @@ def main() -> int:
     integration_checklist = (ROOT / "tests/integration-checklist.md").read_text(encoding="utf-8")
     m3_progress = (ROOT / "progress/m3.md").read_text(encoding="utf-8")
     m3a_acceptance = (ROOT / "tests/m3-a-acceptance-record.md").read_text(encoding="utf-8")
+    m3b_review = (ROOT / "reviews/m3-b-startup-review.md").read_text(encoding="utf-8")
+    m3b_plan = (ROOT / "tests/m3-b-acceptance-plan.md").read_text(encoding="utf-8")
     for message_type in (
         "InitGame", "GameReady", "PlayerAction", "PlayerRequest", "PlayerReply",
         "GameOutput", "GameFinished", "GameFailed", "Shutdown",
@@ -426,6 +449,16 @@ def main() -> int:
         assert known_limit in m3_progress and known_limit in m3a_acceptance
     assert "不等同于服务器驱动版本升级" in m3a_acceptance
     assert "状态：**Completed / Archived**" in m3_progress
+    for stage in ("M3-B1", "M3-B2", "M3-B3", "M3-B4"):
+        assert stage in m3b_review
+        assert stage.replace("M3-", "") in m3b_plan
+    for binding_field in ("game_id", "room_id", "manifest_id", "roster"):
+        assert binding_field in m3b_review
+    for mock_difference in ("player_id", "recipients", "deadline_ms", "coroutine.resume", "QML GameTable"):
+        assert mock_difference in m3b_review
+    for boundary in ("M3-C", "动态 QML", "SGS/1", "不新增 ADR"):
+        assert boundary in m3b_review
+    assert "B4 通过才可宣称 M3-B 完成" in m3b_plan
 
     fixture_count = len(list(EXAMPLES.rglob("*.json")))
 
@@ -436,6 +469,7 @@ def main() -> int:
     print("PASS: package administration remains disk-only until restart; boot generation stays immutable for sync and Lua games")
     print("PASS: cross-package skin requirements retain dependency, conflict, fallback, independent commit, restart, and Draft boundaries")
     print("PASS: M3-A archive pins verified revisions, test counts, known limits, and upgrade-test distinction")
+    print("PASS: M3-B review fixes B1-B4 dependencies, bindings, Mock adaptations, candidate/experimental boundaries, and executable gates")
     print("PASS: expected-invalid cases were rejected by their designated validation layer")
     return 0
 

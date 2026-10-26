@@ -11,7 +11,9 @@
   ],
   "$defs": {
     "gameId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{8,128}$" },
+    "roomId": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
     "sequence": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
+    "revision": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
     "token": { "type": "string", "minLength": 16, "maxLength": 128, "pattern": "^[A-Za-z0-9_-]+$" },
     "playerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9_.:-]+$" },
     "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
@@ -47,8 +49,9 @@
           "ipc_version": true, "game_id": true, "sequence": true, "request_token": true,
           "type": { "const": "InitGame" },
           "payload": {
-            "type": "object", "additionalProperties": false, "required": ["manifest_id", "mode_id", "seed", "players", "packages", "settings"],
+            "type": "object", "additionalProperties": false, "required": ["room_id", "manifest_id", "mode_id", "seed", "players", "packages", "settings"],
             "properties": {
+              "room_id": { "$ref": "#/$defs/roomId" },
               "manifest_id": { "$ref": "#/$defs/hash" },
               "mode_id": { "type": "string", "minLength": 1, "maxLength": 128 },
               "seed": { "type": "string", "pattern": "^[0-9]{1,20}$" },
@@ -73,7 +76,7 @@
       "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "required": ["request_token"], "properties": { "ipc_version": true, "game_id": true, "sequence": true, "request_token": true, "type": { "const": "PlayerReply" }, "payload": { "type": "object", "additionalProperties": false, "required": ["player_id", "resolution", "data"], "properties": { "player_id": { "$ref": "#/$defs/playerId" }, "resolution": { "enum": ["reply", "cancel", "timeout", "disconnect", "shutdown", "default"] }, "data": {} } } } }]
     },
     "gameOutput": {
-      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "properties": { "ipc_version": true, "game_id": true, "sequence": true, "type": { "const": "GameOutput" }, "payload": { "type": "object", "additionalProperties": false, "required": ["recipients", "output_type", "data"], "properties": { "recipients": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/playerId" } }, "output_type": { "type": "string", "minLength": 1, "maxLength": 128 }, "data": {} } } } }]
+      "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "properties": { "ipc_version": true, "game_id": true, "sequence": true, "type": { "const": "GameOutput" }, "payload": { "type": "object", "additionalProperties": false, "required": ["recipients", "output_type", "data"], "properties": { "recipients": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/playerId" } }, "output_type": { "type": "string", "minLength": 1, "maxLength": 128 }, "data": {} }, "allOf": [ { "if": { "properties": { "output_type": { "const": "view_snapshot" } }, "required": ["output_type"] }, "then": { "properties": { "data": { "type": "object", "additionalProperties": false, "required": ["revision", "state"], "properties": { "revision": { "$ref": "#/$defs/revision" }, "state": {} } } } } }, { "if": { "properties": { "output_type": { "const": "view_delta" } }, "required": ["output_type"] }, "then": { "properties": { "data": { "type": "object", "additionalProperties": false, "required": ["base_revision", "revision", "patch"], "properties": { "base_revision": { "$ref": "#/$defs/revision" }, "revision": { "$ref": "#/$defs/revision" }, "patch": {} } } } } } ] } } }]
     },
     "gameFinished": {
       "allOf": [{ "$ref": "#/$defs/base" }, { "type": "object", "additionalProperties": false, "properties": { "ipc_version": true, "game_id": true, "sequence": true, "type": { "const": "GameFinished" }, "payload": { "type": "object", "additionalProperties": false, "required": ["result"], "properties": { "result": { "type": "object" } } } } }]

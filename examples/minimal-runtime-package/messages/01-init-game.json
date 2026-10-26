@@ -2,6 +2,7 @@
   "ipc_version": "1", "type": "InitGame", "game_id": "game-min-0001", "sequence": "1",
   "request_token": "init_min_00000001",
   "payload": {
+    "room_id": "7",
     "manifest_id": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
     "mode_id": "bridge_demo", "seed": "20261025",
     "players": [

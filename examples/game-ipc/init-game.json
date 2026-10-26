@@ -5,6 +5,7 @@
   "sequence": "1",
   "request_token": "init_A1b2C3d4E5f6",
   "payload": {
+    "room_id": "1",
     "manifest_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "mode_id": "standard",
     "seed": "424242",

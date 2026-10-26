@@ -34,6 +34,7 @@ sgs-lua-runtime --game-id <id> --package-root <immutable-dir> --ipc-read <handle
 | 成员 | 类型 | 权限/语义 |
 |---|---|---|
 | `game.id` | string | 只读，与 GameIPC game_id 相同 |
+| `game.room_id` | string | 只读，SgsServer uint64 room_id 的无前导零十进制表示；仅用于关联/诊断，不能访问 Room 对象 |
 | `game.mode_id` | string | 只读，必须已注册 |
 | `game.players` | ordered Player[] | 只读集合，按 seat；ID→连接绑定由 C++ 保管 |
 | `game.settings` | read-only table | 来自 InitGame，规则包不得改写原表 |
@@ -47,6 +48,8 @@ sgs-lua-runtime --game-id <id> --package-root <immutable-dir> --ipc-read <handle
 生命周期：`Created → Initializing → Ready → Running → Finishing → Finished|Failed → Cleaned`。终态和 cleanup 幂等；终态后拒绝动作、事件和新 Request。
 
 房间名称、房主、Ready、连接 Session 和网络身份属于 C++ 框架；Lua 只收到不可伪造的 `player_id`、seat、展示名和模式设置。Lua 权威负责牌堆、手牌、技能、回合、胜负和派生视图。玩家离线由父进程转换为 Request resolution 或框架动作；模式只能选择已声明的离线策略，不能接管 socket。
+
+Wire/API 适配由 Runtime 承担：InitGame 的 `players[].player_id` 暴露为只读 `Player.id`；`game:request{players, timeout_ms, ...}` 规范化为 PlayerRequest 的 `recipients`、`deadline_ms`；PlayerReply 的多目标 resolution 由 Runtime 聚合为 `{status,replies,...}` 后恢复协程。资源包不得自行构造 GameIPC 信封、sequence 或 request_token。
 
 ## GameEvent 状态与清理
 

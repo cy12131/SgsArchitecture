@@ -1,0 +1,19 @@
+{
+  "scenario": "m3_b_binding_and_sequence_review",
+  "launch_record": {
+    "game_id": "game-review-0001",
+    "server_room_id_uint64": 7,
+    "ipc_room_id": "7",
+    "manifest_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "players": ["player-a", "player-b"]
+  },
+  "valid_sequence_boundary": "18446744073709551615",
+  "invalid_cases": [
+    { "name": "room_mismatch", "ipc_room_id": "8", "expected": "IPC_BINDING_MISMATCH" },
+    { "name": "generation_mismatch", "manifest_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "expected": "IPC_BINDING_MISMATCH" },
+    { "name": "roster_mismatch", "players": ["player-a", "player-c"], "expected": "IPC_BINDING_MISMATCH" },
+    { "name": "sequence_overflow", "sequence": "18446744073709551616", "expected": "IPC_SEQUENCE_INVALID" },
+    { "name": "sequence_gap", "previous": "4", "sequence": "6", "expected": "IPC_SEQUENCE_INVALID" }
+  ],
+  "expected": "reject_before_game_running"
+}

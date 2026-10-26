@@ -4,6 +4,8 @@
 
 M3-A 的 Package Manifest/Sync 跨设备动态验收已完成并归档在 `tests/m3-a-acceptance-record.md`。下列 Lua、GameIPC、动态 QML 和 M3-C 项目不因 M3-A 通过而视为完成。
 
+M3-B 按 `tests/m3-b-acceptance-plan.md` 的 B1→B4 顺序验收；本清单中的相关条目只有附带真实独立进程证据后才能关闭。
+
 ## Linux / Lua / Boost.Asio
 
 - 在真实 Linux 子进程验证双匿名管道的 partial read/write、EOF、1 MiB 帧和 4 MiB/256 帧背压。
