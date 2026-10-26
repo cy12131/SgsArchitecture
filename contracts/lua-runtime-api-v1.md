@@ -19,8 +19,8 @@ sgs-lua-runtime --game-id <id> --package-root <immutable-dir> --ipc-read <handle
 ```
 
 - 父进程为每局创建专用工作目录；不得把 Git 工作树或可写安装目录作为 cwd。
-- `package-root` 是父进程从本次 SgsServer 启动时锁定 generation 为当前 `manifest_id` 准备的只读、不可变视图，只包含锁定 commit。Lua 进程没有 Git 凭据、网络下载能力，也不得解析分支/标签。
-- 父进程按 Manifest 依赖拓扑顺序生成允许的 Lua 搜索路径；只加入各包根和框架运行时目录。禁止继承用户 `LUA_PATH`/`LUA_CPATH`。
+- `package-root` 是父进程从本次 SgsServer 启动时锁定 generation 为当前 `manifest_id` 准备的只读、不可变视图，只包含锁定 commit。每项映射到独立的 `installed/<package-id>/<commit>/` checkout；它不是把多包文件复制到一起的共享目录。Lua 进程没有 Git 凭据、网络下载能力，也不得解析分支/标签。
+- 父进程按 Manifest 依赖拓扑顺序生成允许的 Lua 搜索路径；只加入各自独立包根和框架运行时目录。相同模块相对路径不能以搜索顺序实现跨包覆盖，入口按 owner package 的精确根加载。禁止继承用户 `LUA_PATH`/`LUA_CPATH`，也禁止暴露注册表、staging、锁和其他缓存目录。
 - 进程启动后首先等待 `InitGame`。`game_id` 必须匹配启动参数；`manifest_id`、包 ID/commit、玩家 ID/座位必须与父进程的启动记录一致。
 - Runtime 按依赖顺序加载声明了 `server.entry` 的包，完成注册后选择唯一 `mode_id`，创建 Game/GameLogic，再回送关联 Init token 的 `GameReady` 和实际加载包列表。
 - 缺包、commit 不符、入口异常、重复注册、模式缺失或玩家设置非法时发送 `GameFailed`（若 IPC 可用）并以非零码退出；不得发送 GameReady。

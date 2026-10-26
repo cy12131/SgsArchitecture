@@ -86,10 +86,22 @@ Package Sync 遵循 **restart-required activation**。SgsServer 明确区分三�
 ## 客户端事务
 
 1. 比较 `id`、`version`、`commit`、`manifest_sha256` 和 `api_version`；仅目录同名不算已安装。
-2. 在应用专用临时目录获取缺失 commit；禁止凭据写入日志。设置总超时 `sync_timeout_ms`，单仓库失败不延长总期限。
+2. 在 `packages/.staging/<uuid>` 获取缺失 commit；禁止凭据写入日志。设置总超时 `sync_timeout_ms`，单仓库失败不延长总期限。
 3. 验证 commit 对象、`manifest.json` 哈希、Manifest Schema、包 ID/版本/API 和完整依赖图。
-4. 在同一文件系统内原子切换活动集合，保留上一集合用于回滚。
-5. 加载探测成功后删除过期临时状态并发送 `PackageReady`；失败则回滚并发送/记录对应错误。
+4. 验证成功后在同一文件系统原子发布为 `packages/installed/<package-id>/<commit>/`。每个目录是完整独立 checkout；不得合并多个包的文件或写入 `packages` 根。
+5. 使用 `packages/active.json` 原子切换活动集合并保留 `active.previous.json` 用于回滚。索引项必须给出匹配的 ID、commit 和规范目录；目录存在但未被活动索引引用时只算缓存。
+6. 加载探测成功后删除本事务临时状态并发送 `PackageReady`；失败则保持/恢复旧活动索引并发送或记录对应错误。
+
+服务端 PackageManager 使用自己的 state root、`registry.json`、`.registry.lock` 和 `.staging/`，但包内容同样发布到独立的 `installed/<package-id>/<commit>/`。该相同内容层次不要求两端共享注册表、激活文件、锁或迁移实现。服务端注册表是下次启动期望配置；客户端 `active.json` 是本地同步结果。
+
+### 旧布局、缓存与回滚
+
+- 已有规范目录只有在 Git HEAD、clean 状态、Manifest 摘要/身份/API/依赖和声明路径全部通过时才可复用。
+- canonical 目录已存在但被修改、身份不符或与目标来源冲突时，安装器不得覆盖；同步失败并保护现有文件，等待用户处置或显式隔离。
+- 旧的完整单包 checkout 只有在可信注册/激活元数据能证明 `(id, commit)` 且重新验证通过时，才可经 staging 迁入规范目录。
+- 多包已混入同一平铺目录时，不得按文件名、时间戳或加载顺序猜测归属；从各自仓库重新获取锁定 commit。未知文件不参与加载、不自动删除，需报告或隔离。
+- staging 中断只清理该未发布事务；已经发布但未被索引引用的有效目录可保留为非活动缓存。服务端注册表替换或客户端 `active.json` 发布失败时，旧注册/活动状态保持有效。
+- 具体迁移步骤和目录分类见 `reviews/package-directory-layout-review.md`；迁移不改变清单字段、摘要、依赖顺序或连接级 PackageReady 状态。
 
 `PackageReady.data.manifest_id` 必须等于连接当前要求值。否则返回 `MANIFEST_ID_MISMATCH`、`ready=false`，客户端不得进入需包的房间/对局。
 

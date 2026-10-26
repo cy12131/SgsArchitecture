@@ -418,11 +418,13 @@ def main() -> int:
     sync_contract = (ROOT / "contracts/package-sync-v1.md").read_text(encoding="utf-8")
     activation_adr = (ROOT / "decisions/0009-restart-required-package-activation.md").read_text(encoding="utf-8")
     skin_adr = (ROOT / "decisions/0010-cross-package-skin-binding.md").read_text(encoding="utf-8")
+    storage_adr = (ROOT / "decisions/0011-isolated-package-storage.md").read_text(encoding="utf-8")
     integration_checklist = (ROOT / "tests/integration-checklist.md").read_text(encoding="utf-8")
     m3_progress = (ROOT / "progress/m3.md").read_text(encoding="utf-8")
     m3a_acceptance = (ROOT / "tests/m3-a-acceptance-record.md").read_text(encoding="utf-8")
     m3b_review = (ROOT / "reviews/m3-b-startup-review.md").read_text(encoding="utf-8")
     m3b_plan = (ROOT / "tests/m3-b-acceptance-plan.md").read_text(encoding="utf-8")
+    layout_review = (ROOT / "reviews/package-directory-layout-review.md").read_text(encoding="utf-8")
     for message_type in (
         "InitGame", "GameReady", "PlayerAction", "PlayerRequest", "PlayerReply",
         "GameOutput", "GameFinished", "GameFailed", "Shutdown",
@@ -475,6 +477,17 @@ def main() -> int:
         assert capacity_rule in m3b_review
     for stage_rule in ("不提前验收完整 GameLogic", "8 个独立客户端", "不前置到 B2"):
         assert stage_rule in m3b_plan
+    for layout_contract in (manifest_contract, sync_contract, storage_adr, layout_review):
+        assert "installed/<package-id>/<commit>" in layout_contract
+        assert "不得" in layout_contract
+    for preserved_client_mechanism in (".staging/<uuid>", "active.json"):
+        assert preserved_client_mechanism in sync_contract and preserved_client_mechanism in layout_review
+    for preserved_server_mechanism in ("registry.json", ".registry.lock", "启动 generation"):
+        assert preserved_server_mechanism in layout_review
+    for migration_rule in ("不得按文件名", "未知文件", "不自动删除", "锁定 commit"):
+        assert migration_rule in layout_review
+    assert "SGS/1、GameIPC/1 和 Manifest Schema 无需变更" in storage_adr
+    assert "目录迁移前后" in integration_checklist
 
     fixture_count = len(list(EXAMPLES.rglob("*.json")))
 
@@ -486,6 +499,7 @@ def main() -> int:
     print("PASS: cross-package skin requirements retain dependency, conflict, fallback, independent commit, restart, and Draft boundaries")
     print("PASS: M3-A archive pins verified revisions, test counts, known limits, and upgrade-test distinction")
     print("PASS: M3-B review fixes B1-B4 dependencies, bindings, Mock adaptations, candidate/experimental boundaries, and executable gates")
+    print("PASS: package storage keeps isolated id/commit roots, distinct server/client metadata, transactional migration, and rollback rules")
     print("PASS: expected-invalid cases were rejected by their designated validation layer")
     return 0
 

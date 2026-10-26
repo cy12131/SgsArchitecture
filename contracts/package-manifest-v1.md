@@ -39,6 +39,10 @@ Manifest 文件名固定为包根目录的 `manifest.json`，编码为 UTF-8 JSO
 
 入口路径使用 `/`，不得为空、以 `/` 开头、包含 `\\`、NUL、`.`/`..` 段或 URI scheme。解析后路径必须仍在包根目录内。符号链接目标也必须在包根内；加载器应拒绝逃逸链接。文件名大小写按 Manifest 精确匹配，保证跨平台一致性。
 
+每个锁定版本的物理包根固定为该端安装区中的 `installed/<package-id>/<commit>/`。`manifest.json`、入口及资源保持在该 checkout 内；不得把多个包的 Lua、QML 或资源复制到共享目录后按文件名区分。不同包可以拥有相同相对路径，因为解析必须先由当前 generation/active 索引取得 package ID 与 commit 对应的独立根，再解析 Manifest 相对路径。依赖加载顺序不授予文件覆盖权，也不改变资源 owner。
+
+注册表、锁、staging、激活索引和缓存管理文件不是包内容，不能出现在资源解析视图中。目录布局只属于本地安装/激活实现，不加入 Manifest 字段，也不参与 `manifest_sha256` 或 Package Sync `manifest_id`。
+
 ## 注册、启动激活与依赖
 
 本节采用 **restart-required activation**。磁盘安装注册表中的启用标志、仓库 URL 和 commit 是“下次启动期望配置”，不是当前运行状态。管理员添加、更新、启用或停用包时只原子写入该注册表；不得因此加载/卸载入口、改变当前 `manifest_id` 或影响已经运行及随后创建的对局。

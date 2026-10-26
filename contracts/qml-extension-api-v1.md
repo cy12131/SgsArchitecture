@@ -10,7 +10,7 @@
 
 ## 动态页面加载
 
-1. Manifest/Package Sync 完成后，客户端建立服务器本次启动时锁定包集合的只读 generation；对局及该连接期间不会因管理员包操作切换 generation。
+1. Manifest/Package Sync 完成后，客户端从 `active.json` 建立服务器本次启动时锁定包集合的只读 generation；每个条目解析到独立 `installed/<package-id>/<commit>/` 包根。对局及该连接期间不会因管理员包操作切换 generation。
 2. GameMode 注册给出 `ui_package_id` 和 `ui_mode`。宿主在该包的 `client.qml_entry` 创建组件，并核对导出的 `packageId`、`apiVersion`、`supportedModes`。
 3. 基础 import 只允许 QtQuick、SGS 公开模块、当前包 QML 模块及其声明依赖。依赖根按 Manifest 拓扑顺序加入受控 import path；禁止环境变量或任意本地目录。
 4. 组件经历 `Loading → Creating → Active`。解析、import、元数据或初始化失败进入 `Fallback`，显示框架错误页；不得尝试其他 commit 的同名组件。
@@ -94,6 +94,7 @@ Closing → disconnect signals/timers → clear models → destroy page/context
 ## 资源与扩展
 
 - 图片、声音和动画通过 `context.resolveResource(packageId,path)` 或 `sgspkg://<package-id>/<path>` 引用，不拼接 `file://`。
+- `packageId` 先经当前活动索引映射到该包的精确 commit 根，再解析相对路径；不得扫描 `packages` 根、`.staging`、非活动缓存或激活元数据，也不得把多个包复制进共享 QML/resource 目录。
 - 路径必须出现在 Manifest resources 或 QML 入口树下，并通过包根逃逸/符号链接检查。
 - QML 组件由包内 `qmldir` 或显式相对 import 定位；模块 URI 必须在包命名空间内。依赖包只能按声明依赖访问。
 - 缺资源返回无效 URL 和 `RESOURCE_NOT_FOUND`，不得静默回退到其他包同名文件。

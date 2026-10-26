@@ -30,6 +30,15 @@ M3-B 按 `tests/m3-b-acceptance-plan.md` 的 B1→B4 顺序验收；本清单中
 - 运行 examples/minimal-runtime-package 对应真实双人流程，包括正常回复、超时、断线、异常退出和不同玩家视图。
 - 记录 Linux/Windows 版本、锁定 commit、manifest_id、消息 trace 和测试结果；静态样例不得替代该报告。
 
+## 资源包目录隔离与迁移
+
+- 安装两个具有相同 `server/init.lua`、`client/Main.qml` 和资源相对路径的包，验证分别落在 `installed/<id>/<commit>`，无共享复制或覆盖。
+- 验证服务端注册表和启动 generation、客户端 `active.json` 均解析到精确 owner root；注册表、锁、`.staging`、激活元数据、未知根目录文件和非活动缓存不可被 Lua/QML 加载。
+- 复用 HEAD/clean/Manifest/依赖全部通过的缓存；对被修改或身份冲突的 canonical 目录拒绝覆盖和激活。
+- 对完整旧单包 checkout 执行事务迁移；对混合平铺目录从锁定 commit 重新获取，不按文件名分拣，未知文件保留并报告。
+- 注入 staging 中断、目的目录冲突、注册表写失败和 `active.json` 发布失败，验证旧启动 generation/活动索引仍有效且本事务临时文件可安全清理。
+- 目录迁移前后 package ID、commit、Manifest 摘要、依赖拓扑、加载顺序和 `manifest_id` 必须一致；服务端仍只在正常重启后生效。
+
 ## M3-C 跨资源包皮肤扩展验收
 
 以下项目必须使用相互独立、分别锁定 Git commit 的武将包仓库和皮肤包仓库完成；不得为样例增加 SgsServer/SgsClient 专用分支代码：

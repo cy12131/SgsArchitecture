@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.3-draft - 2026-10-26
+
+- 审查 SgsServer `PackageManager` 与 SgsClient `PackageInstaller` 的真实安装路径，确认新安装均已使用 `installed/<package-id>/<commit>/` 隔离目录。
+- 规定注册表、锁、staging、缓存和激活元数据不得作为资源包内容或被 Lua/QML 扫描加载。
+- 补充旧平铺/混合布局、重复与未知文件、污染缓存、事务迁移和失败回滚策略；无法证明归属时从锁定 commit 重新获取，不按文件名猜测。
+- 明确目录规范不改变 Manifest Schema、SGS/1、GameIPC/1、`manifest_id`、依赖拓扑或重启生效机制。
+
 ## 0.3.2-draft - 2026-10-26
 
 - 正式记录单局最多 8 名玩家、具体人数由模式决定；`org.sgs.testmode` 的两人约束不代表框架限制。

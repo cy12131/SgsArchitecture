@@ -2,7 +2,7 @@
 
 SGS 跨仓库架构规范、协议契约、机器可验证 Schema、示例和架构决策记录。
 
-当前规范版本：`0.3.2-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
+当前规范版本：`0.3.3-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
 
 ## 稳定性
 
@@ -25,6 +25,8 @@ M3-A 已于 2026-10-26 完成真实 Windows/Linux 跨设备验收并归档；精
 
 M3-B 启动前审查见 `reviews/m3-b-startup-review.md`，分阶段可执行门槛见 `tests/m3-b-acceptance-plan.md`。本轮沿用 GameIPC/1，不改 SGS/1 或 M3-A 包机制。
 
+资源包目录审查见 `reviews/package-directory-layout-review.md`。两端当前新安装均使用 `installed/<package-id>/<commit>/` 独立包根，但保留各自的注册、激活和回滚机制；旧平铺内容不得按文件名猜测归属。
+
 SGS 单局框架支持 2–8 名玩家，具体人数由游戏模式在该范围内声明和验证；两人测试包不代表框架上限。性能指标必须基于后续专项测量，本阶段不承诺 TPS、P99 延迟或同时运行局数。
 
 ## 验证
@@ -46,6 +48,8 @@ python tests/validate.py
 - Package Agent 拥有规则逻辑；框架 Agent 不把复杂规则移入 C++。
 
 包清单固定命名为 `manifest.json`；服务端 Lua、客户端 QML 和资源入口按包能力选填。仓库 URL 与锁定 commit 是服务器安装注册信息，不属于包自身 Manifest。
+
+包业务文件只能存在于该包的独立 `installed/<package-id>/<commit>/` 根内。注册表、锁、staging、缓存索引和激活元数据不是包内容；Lua/QML 不得扫描 `packages` 根或依靠共享目录中的文件名区分归属。
 
 每条客户端连接必须在 EnterLobby 前确认当前资源包摘要；空清单也需确认。PackageManifestResult 必须适配 SGS/1 的 65536 字节单帧正文上限。
 
