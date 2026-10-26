@@ -22,8 +22,10 @@
 | `rfc8785/section-3.2.2-vector.json` | 标准向量 | 合法 | 规范 UTF-8 字节及 SHA-256 必须精确匹配 |
 | `rfc8785/section-3.2.3-sorting-vector.json` | 标准向量 | 合法 | 属性按 RFC 8785 UTF-16 规则排序 |
 | `game-ipc/init-game.json`, `game-ready.json` | 合法 | 合法 | token 匹配，完成正常初始化 |
+| `game-ipc/init-game-eight-players.json` | 合法 | 合法 | GameIPC roster/seat 接口可表示 8 人，不依赖两人测试模式 |
 | `game-ipc/m3-b-review-cases.json` | 场景 | 混合 | 固化 room/generation/roster 绑定及 sequence uint64 边界 |
 | `game-ipc/player-request.json`, `player-reply.json` | 合法 | 合法 | token、game_id 匹配，完成一次往返 |
+| `game-ipc/player-request-eight-targets.json` | 合法 | 合法 | 8 目标 quorum 请求、私有数据和默认回复均按玩家键控 |
 | `game-ipc/process-exit.json` | 场景文件 | 合法场景 | 进入 Failed，取消请求并异步回收 |
 | `game-ipc/hidden-info-safe.json` | 合法 | 安全 | 私有手牌仅发给 `player-a` |
 | `game-ipc/hidden-info-unsafe.json` | 合法 | 安全策略非法 | 测试因隐藏字段广播给多人而拒绝 |

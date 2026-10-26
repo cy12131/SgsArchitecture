@@ -11,6 +11,14 @@ GameIPC/1 的独立版本、双匿名管道、大端长度帧、九种消息和�
 
 M3-B 只建立“房间开局 → 独立 Lua 进程 → 权威规则 → 定向输出”的服务端/Runtime 闭环。客户端游戏消息、动态 QML、断线重连视图恢复、观察者和皮肤扩展属于 M3-C，不应塞入 M3-B。
 
+## 产品容量边界
+
+SGS 单局支持 2–8 名玩家，具体人数由 GameMode 的 `min_players/max_players` 决定。InitGame roster、seat、Request target 和视图 recipient 的现有 Schema 上限均为 8，未发现需要新增 IPC 消息的缺口。`org.sgs.testmode` 是两人测试模式，不是框架容量依据。
+
+每局的规则状态、roster/seat、Request token 表、序列号和每玩家可见视图相互隔离；C++ 权威验证身份、seat、game/room 绑定和操作权限，Lua 权威执行规则并生成定向视图。单局 Runtime 异常只能失败并回收该 game_id，不得传播为大厅或其他游戏进程崩溃。
+
+本阶段不承诺 TPS、P99 延迟、同时运行局数等未经测量的指标。压力/稳定性实验只有在对应风险、退出条件和验收值明确时执行，不因文档新增 8 人要求重复开展无目标实验。
+
 ## 阶段与依赖
 
 ```text
@@ -30,7 +38,7 @@ M3-C client game protocol + dynamic QML/extensions
 | 阶段 | 交付边界 | 明确不包含 | 最低可执行验收 |
 |---|---|---|---|
 | M3-B1 | GameProcessManager 边界、每局子进程、双管道 codec、启动记录、sequence、deadline、背压、异步 reap | Lua 规则加载、客户端游戏 UI | 协议 stub 完成 Init/GameReady；partial I/O、错帧、超长、序列 gap、队列溢出、崩溃均只失败该局且大厅继续响应 |
-| M3-B2 | 独立 Lua Runtime、受控环境、只读 generation、依赖顺序加载、Runtime.registerPackage/registerGameMode、Game/GameLogic 创建 | Request 协程完整桥接、动态 QML | 真实 Runtime 加载锁定 `org.sgs.testmode`，校验 room/game/manifest/packages/roster，回送匹配 GameReady；任一不匹配确定性失败 |
+| M3-B2 | 独立 Lua Runtime、受控环境、只读 generation、依赖顺序加载、Runtime.registerPackage/registerGameMode、只读 Game/roster 宿主、Init/GameReady、有界 stdout/stderr | 完整 GameLogic/Event/Trigger/Request、8 人真实对局、动态 QML | 真实 Runtime 加载锁定 `org.sgs.testmode`，校验 room/game/manifest/packages/roster，回送匹配 GameReady；模式无关宿主测试证明可表示 8 人；任一绑定不匹配确定性失败 |
 | M3-B3 | PlayerAction、GameEvent/TriggerEvent、PlayerRequest/Reply、异步 timer、重复/迟到/非目标拒绝、协程一次恢复 | 正式客户端动作/回复协议和页面 | 两玩家 headless 流程完成 action→嵌套 event→request→reply/timeout/disconnect→finish；网络 event loop 全程可服务其他连接 |
 | M3-B4 | per-player snapshot/delta、recipient 路由、终态、Shutdown、异常/压力/确定性/净化日志测试 | QML 渲染、客户端 resync、观察者、皮肤 | A 看不到 B 私有选择；SIGKILL/EOF/backpressure/cleanup error 不崩大厅；资源/句柄/timer 恰好回收一次；固定 seed/input 输出可复现 |
 
@@ -61,6 +69,7 @@ Architecture Agent 维护 Schema、状态机、向量和验收证据；Windows C
 | private_data/GameOutput | Lua 生成每玩家视图；C++ 验证 recipients 并精确路由，不做字段猜测 | 可实现，需信息流测试 |
 | GameReady→Running | Runtime 准备好首个动作后发 Ready；父进程验证后直接 Running，无新消息 | 可实现 |
 | room/game 结束后的大厅/房间策略 | GameFinished 后房间保留、销毁或返回 waiting 的产品规则 | 仍需实验/后续产品决定，不阻塞 B1–B3 |
+| 单局玩家容量 | 框架 2–8，模式在范围内声明；testmode 固定 2 仅属包规则 | 可实现，现有 Schema 已覆盖 |
 
 ### 三条父→子消息的实现格式
 
@@ -100,6 +109,8 @@ Manifest `api_version: "1.0"` 是包/框架兼容版本；GameReady `runtime_api
 可立即进入实现：进程/管道边界、GameIPC 帧与九种消息、启动绑定、Init/GameReady 字段、双向 sequence、Request token/target/deadline/first-terminal 规则、写队列上限、失败/reap、recipient allow-list、Game/GameLogic 基本生命周期。
 
 必须通过实验再冻结：Runtime 可执行文件路径/CLI 与 FD 传递细节、Lua 解释器及模块白名单、CPU/内存/文件描述符限制、协程调度实现、堆栈净化格式、Trigger refresh/cost/repeat 的最小稳定 API、quorum 聚合边界、GameFinished 后房间产品状态。
+
+M3-B2 不开始 FreeKill 核心移植。若后续计划实质性复制、移植或链接 FreeKill/utility 的具体源码，必须先列出文件/模块、许可证影响、适配边界和替代方案，向用户说明并等待确认；既有概念研究不构成移植授权。
 
 明确留给 M3-C：SGS/1 游戏动作/回复/视图消息、客户端确认/重试、动态 QML GameViewContext、snapshot/delta resync、重连/观察者、General/Skin/ResourceResolver 运行时验证。M3-B 可用 headless 驱动注入 PlayerAction/Reply，但不得借此冻结客户端协议。
 

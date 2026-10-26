@@ -29,6 +29,8 @@ GameIPC/1 是 SgsServer C++ 父进程和每个活跃对局的独立 Lua 子进�
 
 启动时房间必须已冻结开局名单和座位。父进程从已认证 Session 绑定复制 `player_id`，Lua 不接收 session ID、socket、房主权限或可写 Room 对象。`InitGame`、子进程参数与启动记录的 game/room/generation/roster 任一不一致均以 `IPC_BINDING_MISMATCH` 失败，不允许子进程请求改绑。
 
+框架单局 roster 为 2–8 名唯一玩家，seat 为 1–8 且局内唯一；实际人数必须满足所选 GameMode 的 `min_players..max_players`。两人测试模式只约束自身。每个 game_id 拥有独立 roster、请求表、序列号、状态和可见视图，不得与其他游戏实例共享可变规则状态。
+
 父进程只把目标子进程所需的两个管道句柄设为可继承，关闭其他继承句柄，使用专用工作目录与受控环境启动可信 Runtime 可执行文件。包 Lua 不是进程入口，不能在 SgsServer 主进程执行；Runtime 从只读启动 generation 按依赖顺序加载入口。stdout/stderr 不是 GameIPC，必须独立限流并净化后记录。
 
 ## Lua/QML Bridge 映射
@@ -56,6 +58,7 @@ GameIPC/1 是 SgsServer C++ 父进程和每个活跃对局的独立 Lua 子进�
 - private_data/default_replies 的 key 必须是 recipients 子集；缺失默认值只有在对应策略不会使用默认值时才合法。
 - 每个目标仅接受首个终态 PlayerReply。未知、非目标、重复或迟到回复是语义错误，不转交 Lua。
 - 父进程在 timeout/disconnect/shutdown 时合成相应 resolution 的 PlayerReply；Lua 按 Request 策略聚合，并只恢复等待协程一次。
+- 单目标、多目标和多个按顺序发起的 Request 使用相互独立 token/状态；前一个请求完成并恢复协程后可以创建下一个请求。游戏结束会终结所有 pending token，之后到达的回复按迟到回复拒绝。
 
 ## 状态机
 

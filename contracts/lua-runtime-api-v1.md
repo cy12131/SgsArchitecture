@@ -36,7 +36,7 @@ sgs-lua-runtime --game-id <id> --package-root <immutable-dir> --ipc-read <handle
 | `game.id` | string | 只读，与 GameIPC game_id 相同 |
 | `game.room_id` | string | 只读，SgsServer uint64 room_id 的无前导零十进制表示；仅用于关联/诊断，不能访问 Room 对象 |
 | `game.mode_id` | string | 只读，必须已注册 |
-| `game.players` | ordered Player[] | 只读集合，按 seat；ID→连接绑定由 C++ 保管 |
+| `game.players` | ordered Player[] | 2–8 名只读玩家，按唯一 seat 排序；实际人数由模式声明，ID→连接绑定由 C++ 保管 |
 | `game.settings` | read-only table | 来自 InitGame，规则包不得改写原表 |
 | `game.state` | table | Lua 权威规则状态，只能在调度器协程中修改 |
 | `game.random` | deterministic RNG | 由 InitGame seed 创建，禁止 `math.randomseed` 重置 |
@@ -48,6 +48,8 @@ sgs-lua-runtime --game-id <id> --package-root <immutable-dir> --ipc-read <handle
 生命周期：`Created → Initializing → Ready → Running → Finishing → Finished|Failed → Cleaned`。终态和 cleanup 幂等；终态后拒绝动作、事件和新 Request。
 
 房间名称、房主、Ready、连接 Session 和网络身份属于 C++ 框架；Lua 只收到不可伪造的 `player_id`、seat、展示名和模式设置。Lua 权威负责牌堆、手牌、技能、回合、胜负和派生视图。玩家离线由父进程转换为 Request resolution 或框架动作；模式只能选择已声明的离线策略，不能接管 socket。
+
+Runtime 不得把 `org.sgs.testmode` 的 `min_players=max_players=2` 推广为宿主限制。B2 的 roster/seat 宿主接口必须可表示 8 人，但 B2 不要求运行完整 8 人规则；GameMode 在创建逻辑前验证自己的玩家范围。
 
 Wire/API 适配由 Runtime 承担：InitGame 的 `players[].player_id` 暴露为只读 `Player.id`；`game:request{players, timeout_ms, ...}` 规范化为 PlayerRequest 的 `recipients`、`deadline_ms`；PlayerReply 的多目标 resolution 由 Runtime 聚合为 `{status,replies,...}` 后恢复协程。资源包不得自行构造 GameIPC 信封、sequence 或 request_token。
 
@@ -103,6 +105,7 @@ Waiting 可进入 `TimedOut`、`Cancelled`、`Disconnected` 或 `Shutdown`，这
 
 - 有效 PlayerReply 必须匹配 game_id、未完成 token 和目标 player_id。非目标、未知、迟到或重复回复拒绝，不能恢复协程，也不能覆盖首个结果。
 - 多玩家请求按 `reply_mode` 完成；未被采用的 pending 目标收到 request-closed 通知并使用 default/ignored 状态。
+- 规则协程可依次发起多个单目标或多目标请求；每次等待都必须独立覆盖回复、取消、超时、默认、断线、游戏结束以及未知/非目标/重复/迟到回复，终态后不得再次恢复同一等待。
 - 同一玩家可有多个 token 并发；客户端按 token 分离 UI。模式可自行串行化，但框架不靠“当前唯一请求”关联回复。
 - 父进程 deadline 到达时为每个 pending 目标发送 `PlayerReply(resolution="timeout")`；Lua watchdog 只用于父进程失效保护，不与正常 timer 竞争。
 - 断线转换为 `resolution="disconnect"`。`wait` 仍受原 deadline；其他策略立即处理。

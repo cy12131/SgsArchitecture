@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2-draft - 2026-10-26
+
+- 正式记录单局最多 8 名玩家、具体人数由模式决定；`org.sgs.testmode` 的两人约束不代表框架限制。
+- 确认现有 GameIPC roster/seat、Request 和 GameOutput 上限已覆盖 8 人，无需新增消息类型或修改信封。
+- 收紧 M3-B2 范围：真实 Runtime、generation、Init/GameReady、模块宿主和有界 stdout/stderr；完整 GameLogic/Event/Trigger/Request 留给 B3。
+- 新增 8 人 InitGame 与 8 目标 quorum Request 正例，并加入最终 8 客户端功能验收和风险驱动性能测试约束。
+
 ## 0.3.1-draft - 2026-10-26
 
 - 完成 M3-B 启动前接口审查，划分 B1 进程监管、B2 Runtime 启动、B3 Request/Event Bridge、B4 私有视图与加固。

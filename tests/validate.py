@@ -290,7 +290,8 @@ def main() -> int:
     assert manifest_id(multi_packages) == manifest_id(list(reversed(multi_packages)))
 
     ipc_files = (
-        "init-game.json", "game-ready.json", "player-request.json", "player-reply.json",
+        "init-game.json", "init-game-eight-players.json", "game-ready.json",
+        "player-request.json", "player-request-eight-targets.json", "player-reply.json",
         "hidden-info-safe.json", "hidden-info-unsafe.json",
     )
     ipc = {name: load(f"examples/game-ipc/{name}") for name in ipc_files}
@@ -299,6 +300,17 @@ def main() -> int:
         assert "protocol" not in message and "data" not in message
         assert "ipc_version" in message and "payload" in message
     assert_player_request_semantics(ipc["player-request.json"])
+    assert_player_request_semantics(ipc["player-request-eight-targets.json"])
+
+    eight_init = ipc["init-game-eight-players.json"]
+    eight_players = eight_init["payload"]["players"]
+    assert len(eight_players) == 8
+    assert {player["seat"] for player in eight_players} == set(range(1, 9))
+    assert len({player["player_id"] for player in eight_players}) == 8
+    eight_request = ipc["player-request-eight-targets.json"]
+    assert len(eight_request["payload"]["recipients"]) == 8
+    assert eight_request["payload"]["reply_mode"] == "quorum"
+    assert eight_request["payload"]["required_replies"] == 4
 
     request = ipc["player-request.json"]
     reply = ipc["player-reply.json"]
@@ -459,6 +471,10 @@ def main() -> int:
     for boundary in ("M3-C", "动态 QML", "SGS/1", "不新增 ADR"):
         assert boundary in m3b_review
     assert "B4 通过才可宣称 M3-B 完成" in m3b_plan
+    for capacity_rule in ("2–8", "两人测试模式", "TPS", "P99"):
+        assert capacity_rule in m3b_review
+    for stage_rule in ("不提前验收完整 GameLogic", "8 个独立客户端", "不前置到 B2"):
+        assert stage_rule in m3b_plan
 
     fixture_count = len(list(EXAMPLES.rglob("*.json")))
 
