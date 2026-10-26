@@ -5,6 +5,8 @@
 - 审查基线：SgsArchitecture `05c98184c427660033063f1517c6077d45eee9b1`
 - 参考包：CNB `org.sgs.testmode` commit `9d38a4a970448ca17bfbf7c61f20ab77f6f12451`
 
+后续状态：任务基线声明 M3-B2 已完成。M3-B3 的基础规则与表现接口已在 `reviews/m3-b3-foundation-rules-ui-design.md` 细化；本文保留启动前审查记录，不以旧的单行 B3 描述覆盖新分步计划。
+
 ## 结论
 
 GameIPC/1 的独立版本、双匿名管道、大端长度帧、九种消息和失败边界兼容 M3-B，无需重设协议或改动 SGS/1。现有实现尚未部署 GameIPC，因此本轮给 InitGame 增加 `room_id`、收紧 view profile 属于 Implementation Candidate 的实现前补全，继续使用 `ipc_version: "1"`。

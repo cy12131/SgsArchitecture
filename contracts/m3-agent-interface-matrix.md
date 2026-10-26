@@ -1,6 +1,6 @@
 # M3 Agent Interface Matrix
 
-状态：`0.3.3-draft` 协作边界。Stable 表示已有冻结上游契约；Implementation Candidate 表示需真实实现验证，不代表 API 冻结。M3-A Package Manifest/Sync 已完成跨设备验收；M3-B 已完成启动前审查但尚未实现，该结果不提升 Lua/QML Draft 的稳定级别。
+状态：`0.4.0-draft` 协作边界。Stable 表示已有冻结上游契约；Implementation Candidate 表示需真实实现验证，不代表 API 冻结。M3-B2 已由任务基线声明完成；M3-B3 的基础规则和表现 profile 已获准分阶段实现，但不提升 Lua/QML Draft 的稳定级别。
 
 | 能力/接口 | Linux Server Agent | Windows Client Agent | Package Agent | Architecture Agent | 状态 |
 |---|---|---|---|---|---|
@@ -13,6 +13,9 @@
 | M3-B2 Lua Runtime 宿主适配层 | 实现受限 Runtime、2–8 roster/seat、Init/GameReady、有界日志；不移植完整规则 | 不接触 | 验证两人 testmode 入口，不把 2 人限制扩散到宿主 | 维护 Draft API | Implementation Candidate |
 | GameLogic/GameEvent/TriggerEvent | 不实现具体规则 | 不接触 | 实现规则与触发 | 定义生命周期/安全语义 | Implementation Candidate |
 | M3-B3 Request Bridge | 异步 token、timer、身份验证 | M3-B 不接入正式 UI | Lua 请求/默认/策略与 Mock 对齐 | 定义状态机与向量 | Implementation Candidate |
+| M3-B3 基础规则状态 | 提供通用 Runtime/IPC/身份边界，不解释牌效 | 不参与权威规则 | 实现 Card/zone/event/phase/damage/judge/equip/chain 与基础牌包 | 定义所有权、阶段和验收 | Implementation Candidate |
+| Foundation view profile | 校验 recipients 并精确路由 opaque projection | M3-C 实现模型与 QML | Lua 按观察者生成 snapshot/delta 与展示元数据 | 版本化 profile 与信息流规则 | Draft；B4 后候选冻结 |
+| 武将框装备/判定/连环 UI | 不接触 QML | M3-C 实现指定矩形布局与 ResourceResolver | 提供短名称、范围、图标和状态元数据 | 维护布局与资源边界 | M3-C implementation |
 | QML GameViewContext | 提供已定向数据 | 实现 QObject/模型/生命周期 | 编写包页面/组件 | 维护 Draft API | Implementation Candidate |
 | view snapshot/delta | Lua 输出后校验 recipients | revision 去重、事务应用 | 生成玩家可见视图 | 定义 profile | Implementation Candidate |
 | Card/General/Skill/GameMode | 不写业务规则 | 不写业务规则 | 拥有内容实现 | 只维护注册契约 | Package ownership |

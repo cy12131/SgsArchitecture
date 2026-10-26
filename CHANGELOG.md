@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0-draft - 2026-10-27
+
+- 基于 Agent 3 两份完整 FreeKill 研究报告，确定 M3-B3 通用规则内核与资源包内容分层；不复制或授权移植源码。
+- 增加 GameMode、Player、Card Definition/Instance/CardRef、七类区域及 MoveCards 的权威状态所有权。
+- 规定 CardUse/Response/Effect、Turn/Phase、Damage/Recover/Dying/Death、Judge、Equip/Distance/Range 和 ChainState 的最小行为契约。
+- 在现有 GameOutput snapshot/delta 内规划 `sgs.foundation-view/1-draft`，保持 GameIPC/1 九种消息、Schema 和 SGS/1 不变。
+- 固定武将框延时锦囊、矩形装备栏、武器短名称/范围和中央锁链标记的表现规则；资源继续遵守 ADR-0010/0011。
+- 将 M3-B3 拆为 B3.1–B3.6，并明确 B3、B4、M3-C 及四个 Agent 的职责、验收和 GPL/独立实现决策清单。
+
 ## 0.3.3-draft - 2026-10-26
 
 - 审查 SgsServer `PackageManager` 与 SgsClient `PackageInstaller` 的真实安装路径，确认新安装均已使用 `installed/<package-id>/<commit>/` 隔离目录。

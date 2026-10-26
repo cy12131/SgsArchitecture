@@ -72,6 +72,26 @@ revision 是每个接收者视图独立的 uint64 十进制字符串。规则：
 4. Lua 为每个 recipients 集合生成恰当视图。手牌、私有选项等只存在于对应玩家 snapshot/delta；客户端不能假定拥有权威全局状态。
 5. 页面重建时宿主从缓存的当前可见模型创建新只读快照，并重新发出尚未终结的本地 activeRequests；不得重放已关闭 token。
 
+### 基础游戏表现 profile（Draft）
+
+`sgs.foundation-view/1-draft` 是 `visibleState.profile`，不是新的 IPC 消息。最小状态包含 mode/turn、按 seat 排列的 players 和当前 projection 所需的 `card_definitions`：
+
+- 玩家公开字段至少能表达 `player_id`、seat、alive、hp/max_hp、phase、`hand_count`、equipment、judge 和 `chained`。
+- 私有 `hand_cards` 只在本地玩家有权观察时出现；不可见不能伪装成空手牌。最终省略/显式可见性形状在 M3-B4 信息流测试后冻结。
+- equipment/judge 项引用 instance ID 与 definition ID；QML 不根据中文名或文件名判断槽位/牌效。
+- 展示 definition 可提供 `owner_package_id`、display name、`short_name`、card type、equip slot、武器声明范围和 ResourceRef。普通新卡牌/装备不能要求客户端 C++ 增加 ID 分支。
+- ResourceRef 为 `{package_id,path}`。commit 和 package-root 只从当前 GameViewContext generation 映射取得，业务 payload 或 QML 不得选择其他 commit。
+
+delta 必须事务更新同一 profile；具体 patch 编码和重连 resync 保持 Implementation Candidate。
+
+### 武将框标准布局
+
+- 延时锦囊直接渲染公开 judge 区 Card Instance。实例被权威状态移出后，标记随 snapshot/delta 移除；QML 不保留第二份判定区状态。
+- 装备为矩形长条。从底至上，无宝物时是 `-1 马、+1 马、防具、武器`；有宝物时是 `宝物、合并坐骑栏、防具、武器`。合并坐骑栏只组合布局，仍保留 offensive/defensive 两个逻辑槽。
+- 武器显示 definition 的声明攻击范围和包提供的短名称。雌雄剑、青龙刀只是元数据示例；不得在客户端 C++ 硬编码名称缩写。
+- `chained=true` 时在武将框中央显示锁链标记，false 时随同一视图事务隐藏。动画完成与否不影响规则状态。
+- 图标/动画必须通过当前 generation 的 ResourceRef 解析；缺失时安全占位，不扫描 staging、非活动包或其他包同名文件。
+
 ## Request UI
 
 GameRequest 来自 GameIPC PlayerRequest 的本地目标切片，只包含 public_data 和 `private_data[localPlayerId]`。客户端以 token 为主键，允许多个并发请求；同 token 只提交一次。deadline 到达、服务端关闭、断线或页面销毁时先从 activeRequests 移除，再发 `gameRequestClosed`，随后禁用相关 UI。迟到点击必须在 context 层拒绝，不能触达网络。

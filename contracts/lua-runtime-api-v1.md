@@ -6,7 +6,7 @@
 
 ## 参考实现与适配边界
 
-本轮实际抽查了本地 `freekill-core-master.zip` 和 `freekill-asio-static` 中的 `lua/server/request.lua`、`gameevent.lua`、`gamelogic.lua`、`lua/core/trigger_event.lua`、`package.lua`、`game_mode.lua`、`request_handler.lua` 及 QML RoomModel/RequestLifecycle。可借鉴点包括逐玩家请求数据和默认回复、协程让出、事件/cleaner 双栈、优先级触发、重复触发计数和 UI 请求清理。
+本草案已结合 Agent 3 的 `M3-B3-FreeKill-core-pre-port-analysis.md` 与 `M3-B3-FreeKill-base-rules-ui-port-analysis.md`。两份报告通过只读共享记录取得完整内容；其来源 ZIP 只有 SHA-256、没有可验证上游 commit，因此只能作为行为研究，不能视为源码移植授权。可借鉴点包括逐玩家请求数据和默认回复、协程让出、事件/cleaner 双栈、优先级触发、通用 CardUse/Move/Judge/Damage/Death 分层、装备和连环行为。
 
 以下内容不直接兼容：FreeKill 的全局 `RoomInstance`/`ClientInstance`、目录扫描加载、CBOR/内部命令、直接 QML→ClientInstance 调用以及具体卡牌/技能类。SGS 使用显式 GameIPC、锁定 commit、依赖拓扑顺序和能力受限宿主；适配包不得假定 FreeKill 模块名或对象布局存在。
 
@@ -52,6 +52,40 @@ sgs-lua-runtime --game-id <id> --package-root <immutable-dir> --ipc-read <handle
 Runtime 不得把 `org.sgs.testmode` 的 `min_players=max_players=2` 推广为宿主限制。B2 的 roster/seat 宿主接口必须可表示 8 人，但 B2 不要求运行完整 8 人规则；GameMode 在创建逻辑前验证自己的玩家范围。
 
 Wire/API 适配由 Runtime 承担：InitGame 的 `players[].player_id` 暴露为只读 `Player.id`；`game:request{players, timeout_ms, ...}` 规范化为 PlayerRequest 的 `recipients`、`deadline_ms`；PlayerReply 的多目标 resolution 由 Runtime 聚合为 `{status,replies,...}` 后恢复协程。资源包不得自行构造 GameIPC 信封、sequence 或 request_token。
+
+## 基础游戏状态模型（Implementation Candidate）
+
+本节冻结状态所有权与安全语义，不冻结全部 Lua 构造函数或回调签名。
+
+### GameMode、Player 与 Card
+
+- GameMode 注册至少声明稳定 ID、`min_players/max_players`（均在 2–8）、logic factory、`ui_package_id/ui_mode`。标准回合阶段、牌堆构建、胜负和阵营属于 mode/规则包扩展。
+- Player 由 Game 持有；`id`、seat 和 roster 顺序不可变。Lua 权威状态至少能表示 alive、hp/max_hp、当前 phase、`chained` 和各区域；Session/网络在线状态不直接暴露为可写 Player 字段。
+- Card Definition 在 Initializing 期间由当前 owner package 注册，进入 Ready 后冻结。最小语义包含 definition ID、card type/subtype、行为扩展和展示元数据；ID 字符串语法仍为 Draft。
+- Card Instance 由 Game 为本局创建并分配唯一 instance ID，引用一个 definition，并包含物理花色/点数和唯一当前区域。实例不能同时属于两个区域。
+- 技能转化或虚拟牌使用瞬时 CardRef：引用 definition 和零个或多个 subcard instance IDs。CardRef 不伪造成新物理实例；subcards 的最终移动由通用结算处理。
+
+### 区域与 MoveCards
+
+最小区域为：Game 有序 `draw_pile`、`processing`、`discard_pile`、`void`；Player 有序 `hand`、按 EquipSlot 唯一占位的 `equipment`、有序 `judge`。
+
+- `draw_pile` 的数量可公开，牌序/牌面隐藏；hand 仅 owner 或明确授权观察者看实例，其他人只看数量。
+- equipment 与 judge 默认公开。processing 的可见性由父事件决定，不能把尚属私有选择的牌自动公开。
+- 所有区域变化经通用 MoveCards 事件原子验证/提交，并记录 move/event ID、来源、目的、reason，以及可选 actor/skill/card-use 关联。失败不能留下半移动状态。
+- 装备替换、判定牌进入 Processing、牌效结束后的实体牌清理和弃置均复用 MoveCards。
+
+### 通用结算原语
+
+- Turn/Phase：首个标准 profile 至少表达 Start/Judge/Draw/Play/Discard/Finish；GameMode 可注册阶段，但转换、跳过与终止必须经事件。
+- CardUse/CardResponse/CardEffect：分别负责使用意图与目标、既存上下文中的响应、逐目标效果/抵消。普通牌和锦囊 definition 提供目标、条件与具体 effect。
+- Damage/Recover：结构化来源、目标、数值、属性和 card/skill/event 关联；修改器按稳定顺序结算后才提交 hp。
+- Dying/Death：进入阈值后创建救援序列，成功则退出，失败则死亡和清理；桃/酒只是注册到该通用流程的牌行为。
+- Judge：判定牌进入 Processing、允许改判、形成最终结果并清理；延时锦囊 definition 决定伤害、阶段跳过、弃置或转移。
+- Equip：逻辑槽为 `weapon|armor|offensive_ride|defensive_ride|treasure`；替换同槽时旧装备 uninstall 后新装备 install。槽位失效影响技能，不改变公开区域事实。
+- Distance/AttackRange：以存活座次环和稳定 modifier 顺序计算；-1 马修正来源，+1 马修正目标，武器提供声明范围。客户端不能据显示范围自行授权目标。
+- ChainState：Player 的 `chained` 是权威布尔状态。可传导属性伤害按稳定座次创建子 Damage，保留父伤害关联；每个子事件完整经过 Damage/Dying/Death，不能由客户端预测或执行。
+
+具体杀、闪、桃、酒、普通/延时锦囊、武器、防具、坐骑与宝物由资源包注册。新增普通卡牌或装备不得要求 SgsServer/SgsClient 加入卡牌专用 C++ 代码。
 
 ## GameEvent 状态与清理
 

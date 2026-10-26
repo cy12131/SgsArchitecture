@@ -419,12 +419,14 @@ def main() -> int:
     activation_adr = (ROOT / "decisions/0009-restart-required-package-activation.md").read_text(encoding="utf-8")
     skin_adr = (ROOT / "decisions/0010-cross-package-skin-binding.md").read_text(encoding="utf-8")
     storage_adr = (ROOT / "decisions/0011-isolated-package-storage.md").read_text(encoding="utf-8")
+    rule_view_adr = (ROOT / "decisions/0012-authoritative-rule-state-and-view-projection.md").read_text(encoding="utf-8")
     integration_checklist = (ROOT / "tests/integration-checklist.md").read_text(encoding="utf-8")
     m3_progress = (ROOT / "progress/m3.md").read_text(encoding="utf-8")
     m3a_acceptance = (ROOT / "tests/m3-a-acceptance-record.md").read_text(encoding="utf-8")
     m3b_review = (ROOT / "reviews/m3-b-startup-review.md").read_text(encoding="utf-8")
     m3b_plan = (ROOT / "tests/m3-b-acceptance-plan.md").read_text(encoding="utf-8")
     layout_review = (ROOT / "reviews/package-directory-layout-review.md").read_text(encoding="utf-8")
+    m3b3_design = (ROOT / "reviews/m3-b3-foundation-rules-ui-design.md").read_text(encoding="utf-8")
     for message_type in (
         "InitGame", "GameReady", "PlayerAction", "PlayerRequest", "PlayerReply",
         "GameOutput", "GameFinished", "GameFailed", "Shutdown",
@@ -488,6 +490,27 @@ def main() -> int:
         assert migration_rule in layout_review
     assert "SGS/1、GameIPC/1 和 Manifest Schema 无需变更" in storage_adr
     assert "目录迁移前后" in integration_checklist
+    for rule_term in (
+        "Card Definition", "Card Instance", "CardUse", "CardResponse", "CardEffect",
+        "Damage/Recover", "Dying/Death", "Judge", "EquipSlot", "ChainState",
+    ):
+        assert rule_term in lua_contract and rule_term in m3b3_design
+    for zone in ("draw_pile", "hand", "equipment", "judge", "processing", "discard_pile", "void"):
+        assert zone in lua_contract and zone in m3b3_design
+    for stage in ("B3.1", "B3.2", "B3.3", "B3.4", "B3.5", "B3.6"):
+        assert stage in m3b3_design
+    for ui_rule in ("short_name", "chained"):
+        assert ui_rule in qml_contract and ui_rule in m3b3_design
+    for layout in (
+        ("-1 马、+1 马、防具、武器", "-1 马 → +1 马 → 防具 → 武器"),
+        ("宝物、合并坐骑栏、防具、武器", "宝物 → 合并坐骑栏 → 防具 → 武器"),
+    ):
+        assert layout[0] in qml_contract and layout[1] in m3b3_design
+    for contract in (ipc_contract, qml_contract, rule_view_adr, m3b3_design):
+        assert "sgs.foundation-view/1-draft" in contract
+    assert "不新增顶层消息" in m3b3_design and "九种消息" in rule_view_adr
+    assert "GPLv3" in m3b3_design and "独立实现" in m3b3_design
+    assert "M3-B3" in m3b3_design and "M3-B4" in m3b3_design and "M3-C" in m3b3_design
 
     fixture_count = len(list(EXAMPLES.rglob("*.json")))
 
@@ -500,6 +523,7 @@ def main() -> int:
     print("PASS: M3-A archive pins verified revisions, test counts, known limits, and upgrade-test distinction")
     print("PASS: M3-B review fixes B1-B4 dependencies, bindings, Mock adaptations, candidate/experimental boundaries, and executable gates")
     print("PASS: package storage keeps isolated id/commit roots, distinct server/client metadata, transactional migration, and rollback rules")
+    print("PASS: M3-B3 foundation rules define authoritative cards/zones/events, staged delivery, versioned views, UI layout, and license boundaries")
     print("PASS: expected-invalid cases were rejected by their designated validation layer")
     return 0
 

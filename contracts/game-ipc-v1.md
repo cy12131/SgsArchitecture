@@ -48,6 +48,8 @@ GameIPC/1 是 SgsServer C++ 父进程和每个活跃对局的独立 Lua 子进�
 
 当前 Lua/QML Draft 所需交互均可由现有九种消息表达，不新增消息类型。GameOutput 约定 profile：`view_snapshot` 使用 `{revision,state}`，`view_delta` 使用 `{base_revision,revision,patch}`；revision 为 uint64 十进制字符串。Profile data 仍受接收者权限检查。
 
+M3-B3 基础游戏状态使用 `state.profile="sgs.foundation-view/1-draft"` 的业务 profile。它在现有 `state`/`patch` 内表达模式/回合、按玩家裁剪的状态、卡牌展示定义、装备、判定区和 `chained`，不改变 GameOutput 外层字段或 GameIPC Schema。破坏性业务形状变化必须采用新 profile 标识；只有帧、信封、消息方向或公共字段发生不兼容变化时才考虑升级 `ipc_version`。父进程仍把业务状态视为不可信但不猜测字段，只执行 Schema/大小、recipients 和路由边界；具体 profile 由 Runtime 与客户端宿主验证。
+
 `PlayerAction` 是父→子单向、按序交付的已认证意图，不带 `request_token`；`sequence` 只用于 IPC 顺序/重复检测，不作为业务 action ID。客户端游戏动作的网络消息、确认和重试属于 M3-C，届时由 C++ 将认证后的连接身份覆盖为 `payload.player_id`，不得采用客户端自报身份。`PlayerReply` 仅用于回答既存 PlayerRequest：客户端只能产生 `reply|cancel` 意图，`timeout|disconnect|shutdown|default` 只能由父进程按状态合成。
 
 ## Request 关联规则
@@ -79,6 +81,8 @@ GameIPC/1 是 SgsServer C++ 父进程和每个活跃对局的独立 Lua 子进�
 Lua 子进程是权威规则状态持有者，但仍视为受限组件。C++ 绑定网络连接与 `player_id`，不接受 Lua 指定连接句柄。`GameOutput.recipients` 在转发前验证属于本局。隐藏牌、私有技能选项等必须分别定向；参见安全示例。
 
 私有视图由 Lua 按玩家生成，而不是由 C++ 猜测字段并过滤。C++ 的强制边界是：验证 recipients 非空、均属于启动 roster，并且只路由到这些 player_id 当前绑定的 Session；不得把 GameOutput 原样广播。`view_snapshot`/`view_delta` 必须符合 Schema，其他 output profile 在 M3-B 不进入客户端网络。观察者、重连 resync 和动态 QML 展示属于 M3-C。
+
+foundation profile 中手牌实例、私有候选和未公开 processing 内容只能存在于有权观察者的 projection；其他玩家至多收到公开数量。equipment、judge 和 `chained` 属公开状态，但仍必须随每个 recipient 的完整 projection 生成，不得先构造含全部私有字段的广播对象再依赖客户端删除。
 
 ## 进程异常
 

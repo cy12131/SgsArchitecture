@@ -24,6 +24,7 @@
 
 ## B3 — Action, event, trigger, request
 
+- 按 B3.1→B3.6 增量实施：状态/区域 → Event/阶段 → Trigger/Request → 杀闪桃酒 → 普通/延时锦囊与判定 → 装备/距离/连环；详细输入、输出和门槛见 `reviews/m3-b3-foundation-rules-ui-design.md`。
 - headless 驱动注入已认证 PlayerAction；Runtime 覆盖/拒绝不匹配 player 身份。
 - 运行 `org.sgs.testmode` 两玩家流程，验证嵌套事件、child-before-parent LIFO cleanup、确定性 trigger 顺序。
 - PlayerRequest token 唯一，private/default keys 仅限 targets；覆盖 reply、cancel、timeout、disconnect、shutdown 和 default。
@@ -31,10 +32,15 @@
 - 非目标、未知、重复、迟到回复不进入 Lua；all/first/quorum 聚合只恢复协程一次。
 - Request pending 时结束游戏，验证全部 token 终结、默认/取消策略只执行一次，随后到达的回复按迟到回复拒绝。
 - 请求等待期间持续对另一连接执行网络请求，证明 Boost.Asio event loop 未被 Lua/pipe/waitpid 阻塞。
+- 验证 Card Instance 在 draw/hand/equipment/judge/processing/discard/void 中唯一归属，MoveCards 失败不产生半移动；其他玩家只见手牌数量。
+- 用杀/闪/桃/酒证明 CardUse/Response/Effect、Damage/Recover/Dying/Death 主链，再覆盖普通锦囊、无懈、Judge、延时锦囊转移/阶段跳过。
+- 覆盖 weapon/armor/offensive_ride/defensive_ride/treasure 五槽、装备替换与失效、距离/攻击范围、火雷属性和连环子 Damage；所有具体牌效均来自包注册，无 C++ 卡牌 ID 分支。
+- 输出 headless `sgs.foundation-view/1-draft` snapshot，包含公开装备、判定区、chained 和包元数据；B3 只证明生成，不以 Windows QML 渲染作为门槛。
 
 ## B4 — Private views and hardening
 
 - 为 2–8 名玩家分别生成 view_snapshot/view_delta；任一玩家的帧、网络输出、日志和错误中均不存在其他玩家的私有选择。
+- 对 foundation profile 执行信息流测试：他人 projection 不含手牌实例或私有 processing 内容，装备/judge/chained 与权威状态一致；破坏性形状变化使用新 profile 标识。
 - recipients 为空、陌生玩家、跨局玩家或重复玩家时拒绝；父进程只向目标当前 Session 路由。
 - 固定 seed 与输入重复执行，比较 GameOutput/GameFinished；sequence 与时间性诊断字段除外。
 - 在 action、request、cleanup、finish 各阶段注入 Lua error、进程退出和背压，验证通用失败通知、token 取消、幂等 cleanup/reap。

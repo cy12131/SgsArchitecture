@@ -19,6 +19,8 @@ M3-B 按 `tests/m3-b-acceptance-plan.md` 的 B1→B4 顺序验收；本清单中
 ## Windows / Qt / QML
 
 - 真实 QQmlEngine 加载包入口、qmldir 依赖、缺失 import 和 fallback 页面。
+- 使用 `sgs.foundation-view/1-draft` 验证武将框：延时锦囊随 judge 区移动增删；装备矩形栏按有/无宝物两种从底至上顺序排列；武器范围/短名来自包元数据；中央锁链只绑定 chained。
+- 安装两个含同名图标的包，确认 ResourceRef 只从声明 package ID 的活动 commit 根解析，且缺失资源安全占位而不跨包回退。
 - 多 token 并发、timeout 后点击、重复点击和非目标 token 均不发送越权回复。
 - snapshot/delta 重复、乱序、gap、页面重建和重连后的 resync。
 - GameEnded/断线/服务器重启后重连并切换包 generation 时销毁页面，使用 QPointer/queued signal 检查无失效对象调用；管理员操作本身不得触发切换。
