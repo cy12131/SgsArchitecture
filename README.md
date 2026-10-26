@@ -2,7 +2,7 @@
 
 SGS 跨仓库架构规范、协议契约、机器可验证 Schema、示例和架构决策记录。
 
-当前规范版本：`0.2.2-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
+当前规范版本：`0.3.0-draft`。本仓库只定义边界，不包含 SgsServer、SgsClient 或正式游戏包业务实现。
 
 ## 稳定性
 
@@ -17,7 +17,10 @@ SGS 跨仓库架构规范、协议契约、机器可验证 Schema、示例和架
 - `examples/`：正例、反例和安全测试向量。
 - `tests/`：Schema 与跨文件语义校验。
 - `decisions/`：ADR。
+- `progress/`：跨仓库阶段状态与归档索引。
 - `contracts/m3-agent-interface-matrix.md`：三实现 Agent 与架构维护边界。
+
+M3-A 已于 2026-10-26 完成真实 Windows/Linux 跨设备验收并归档；精确版本、测试证据和限制见 `progress/m3.md` 与 `tests/m3-a-acceptance-record.md`。M3-A 完成不代表 Lua GameIPC、动态 QML 或跨包皮肤运行时已经实现。
 
 ## 验证
 

@@ -1,11 +1,11 @@
 # M3 Agent Interface Matrix
 
-状态：`0.2.2-draft` 协作边界。Stable 表示已有冻结上游契约；Implementation Candidate 表示需真实实现验证，不代表 API 冻结。
+状态：`0.3.0-draft` 协作边界。Stable 表示已有冻结上游契约；Implementation Candidate 表示需真实实现验证，不代表 API 冻结。M3-A Package Manifest/Sync 已完成跨设备验收；该结果不提升 Lua/QML Draft 的稳定级别。
 
 | 能力/接口 | Linux Server Agent | Windows Client Agent | Package Agent | Architecture Agent | 状态 |
 |---|---|---|---|---|---|
 | SGS/1 帧与 M1/M2 消息 | 实现/保持兼容 | 实现/保持兼容 | 不接触 | 维护契约 | Stable baseline |
-| Package Sync 信封、门禁、64 KiB | 实现清单/Ready 状态和错误 | 实现事务同步/Ready | 提供合法 manifest | 维护 Schema/向量 | Stable M3 baseline |
+| Package Sync 信封、门禁、64 KiB | 已通过 M3-A 跨设备验收 | 已通过 M3-A 下载/缓存/Ready 验收 | `org.sgs.testmode` 已验证 | 维护 Schema/归档证据 | M3-A accepted |
 | 重启生效、Git commit 锁定与只读 generation | 管理操作写磁盘；启动验证并锁定一次；不热重载 | 每次重连获取、验证、原子切换 | 发布不可变 commit | 维护 ADR/边界 | Stable M3 policy / implementation candidate |
 | Lua 子进程创建/监管 | 实现双管道、参数、超时、reap | 不接触 | 不接触 | 维护 GameIPC | Implementation Candidate |
 | GameIPC 编解码/背压 | 父端实现 | 不直接使用 | Runtime 适配层配合 | 维护 Schema/向量 | Implementation Candidate |

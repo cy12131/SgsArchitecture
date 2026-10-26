@@ -386,6 +386,8 @@ def main() -> int:
     activation_adr = (ROOT / "decisions/0009-restart-required-package-activation.md").read_text(encoding="utf-8")
     skin_adr = (ROOT / "decisions/0010-cross-package-skin-binding.md").read_text(encoding="utf-8")
     integration_checklist = (ROOT / "tests/integration-checklist.md").read_text(encoding="utf-8")
+    m3_progress = (ROOT / "progress/m3.md").read_text(encoding="utf-8")
+    m3a_acceptance = (ROOT / "tests/m3-a-acceptance-record.md").read_text(encoding="utf-8")
     for message_type in (
         "InitGame", "GameReady", "PlayerAction", "PlayerRequest", "PlayerReply",
         "GameOutput", "GameFinished", "GameFailed", "Shutdown",
@@ -409,6 +411,21 @@ def main() -> int:
     assert "M3-C 跨资源包皮肤扩展验收" in integration_checklist
     for acceptance_term in ("武将包内容和 commit 保持不变", "安全回退", "正常重启", "锁定 Git commit"):
         assert acceptance_term in integration_checklist
+    release_evidence = {
+        "8e3b941e24f995f2f4ef1efe8b60bfe0fb134662",
+        "eb5f584c06193195103ee81fbd537e92970675c9",
+        "9d38a4a970448ca17bfbf7c61f20ab77f6f12451",
+        "v0.4.0-m3a",
+        "org.sgs.testmode",
+    }
+    for evidence in release_evidence:
+        assert evidence in m3_progress and evidence in m3a_acceptance
+    for passed_count in ("Debug 6/6", "ASan/UBSan 6/6", "Debug 4/4", "Release 4/4"):
+        assert passed_count in m3a_acceptance
+    for known_limit in ("Lua GameIPC", "动态 QML", "皮肤跨包绑定", "IPv6 TLS", "资源配额"):
+        assert known_limit in m3_progress and known_limit in m3a_acceptance
+    assert "不等同于服务器驱动版本升级" in m3a_acceptance
+    assert "状态：**Completed / Archived**" in m3_progress
 
     fixture_count = len(list(EXAMPLES.rglob("*.json")))
 
@@ -418,6 +435,7 @@ def main() -> int:
     print("PASS: minimal bridge validates per-direction sequences, token/target authority, timeout/default, and private views")
     print("PASS: package administration remains disk-only until restart; boot generation stays immutable for sync and Lua games")
     print("PASS: cross-package skin requirements retain dependency, conflict, fallback, independent commit, restart, and Draft boundaries")
+    print("PASS: M3-A archive pins verified revisions, test counts, known limits, and upgrade-test distinction")
     print("PASS: expected-invalid cases were rejected by their designated validation layer")
     return 0
 

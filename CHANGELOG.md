@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-draft - 2026-10-26
+
+- 归档 M3-A 双端真实跨设备集成验收；SgsServer/SgsClient 阶段标签 `v0.4.0-m3a` 已核验指向各自给定 main。
+- 记录 CNB `org.sgs.testmode` 公开仓库、锁定 commit、首次下载、重复连接缓存复用和 PackageReady 门禁结果。
+- 记录双 GUI 大厅/房间/准备状态回归，以及服务端 Debug、ASan/UBSan 和客户端 Debug、Release 全通过计数。
+- 明确 Lua GameIPC、动态 QML、跨包皮肤运行时仍未完成，以及 CNB IPv6 TLS、下载超时/资源配额和真正服务器驱动版本升级联调等后续事项。
+- 新增 M3 架构进度文档、M3-A 验收记录和对应静态一致性检查。
+
 ## 0.2.2-draft - 2026-10-25
 
 - 确立独立皮肤包可通过稳定跨包武将 ID 扩展其他包中既有武将的长期架构要求。
